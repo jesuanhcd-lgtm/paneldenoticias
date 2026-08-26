@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel de noticias - Tandil</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f5f7; margin: 0; color: #1a1a1a; }
+  header { background: #1a2332; color: #fff; padding: 20px 16px 0 16px; position: sticky; top: 0; z-index: 10; }
+  header h1 { margin: 0 0 4px 0; font-size: 20px; }
+  header .fecha { font-size: 13px; opacity: 0.7; margin-bottom: 16px; }
+  .tabs { display: flex; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.2); overflow-x: auto; }
+  .tab { padding: 10px 0; cursor: pointer; color: #aaa; border-bottom: 3px solid transparent; font-weight: 600; font-size: 14px; white-space: nowrap; }
+  .tab.active { color: #fff; border-bottom: 3px solid #0b5fff; }
+  .buscador { max-width: 1200px; margin: 16px auto 0 auto; padding: 0 16px; }
+  .buscador input { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #d0d3d9; font-size: 15px; }
+  main { max-width: 1200px; margin: 0 auto; padding: 16px; }
+  .grid-cat { display: none; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+  .grid-cat.active { display: grid; }
+  .tarjeta { background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .tarjeta h2 { font-size: 16px; margin: 0 0 12px 0; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+  .item { display: block; padding: 8px 0; border-bottom: 1px solid #f2f2f2; text-decoration: none; color: #1a1a1a; }
+  .item:last-child { border-bottom: none; }
+  .item:hover { color: #0b5fff; }
+  .badge-nueva { display: inline-block; background: #e6f4ea; color: #1e7e34; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; margin-right: 6px; vertical-align: middle; }
+  .desaparecidas { margin-top: 10px; font-size: 12px; color: #999; }
+  .desaparecidas summary { cursor: pointer; }
+  .desaparecidas ul { margin: 6px 0 0 0; padding-left: 18px; }
+  .oculto { display: none !important; }
+  .estado-carga { text-align: center; padding: 60px 16px; color: #777; }
+  .estado-error { text-align: center; padding: 60px 16px; color: #b3261e; max-width: 500px; margin: 0 auto; }
+  .estado-error button { margin-top: 12px; padding: 8px 16px; border-radius: 6px; border: 1px solid #d0d3d9; background: #fff; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Panel de noticias</h1>
+  <div class="fecha" id="fecha-actualizacion">Cargando...</div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('Tandil')">Tandil</div>
+    <div class="tab" onclick="switchTab('Nacional')">Nacionales</div>
+    <div class="tab" onclick="switchTab('Boletin')">Boletín SIBOM</div>
+  </div>
+</header>
+
+<div class="buscador">
+  <input id="buscador-input" type="text" placeholder="Buscar título o medio (no aplica a Boletín)..." disabled>
+</div>
+
+<main id="main-content">
+  <div class="estado-carga" id="estado-carga">Cargando datos del panel...</div>
+</main>
+
+<script>
+  // ============================================================
+  // CONFIGURACIÓN: pegá acá la URL de tu Web App de Apps Script
+  // (la que termina en /exec)
+  // ============================================================
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIOK9PXtu47bt4iMmneWMa42toYvPDbesTvU4pYe4f4GIUQMwQbSWRp7_uq7PMbujk/exec";
+
+  function escaparHtml(texto) {
+    return String(texto)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function switchTab(cat) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.grid-cat').forEach(g => {
+      g.classList.remove('active');
+      g.style.display = 'none';
+    });
+
+    document.querySelector('[onclick="switchTab(\'' + cat + '\')"]').classList.add('active');
+
+    const panel = document.getElementById(cat);
+    panel.classList.add('active');
+    panel.style.display = 'grid';
+  }
+
+  function generarGridNoticias(secciones, id) {
+    const html = secciones.map(sec => {
+      const items = sec.actuales.map(i =>
+        `<a class="item" data-texto="${escaparHtml(i.title.toLowerCase())}" href="${escaparHtml(i.link)}" target="_blank" rel="noopener">${i.esNueva ? '<span class="badge-nueva">NUEVA</span>' : ''}${escaparHtml(i.title)}</a>`
+      ).join('');
+      const des = sec.desaparecidas.length > 0
+        ? `<details class="desaparecidas"><summary>${sec.desaparecidas.length} caídas</summary><ul>${sec.desaparecidas.map(d => `<li>${escaparHtml(d.title)}</li>`).join('')}</ul></details>`
+        : '';
+      return `<section class="tarjeta" data-sitio="${escaparHtml(sec.nombre.toLowerCase())}"><h2>${escaparHtml(sec.nombre)}</h2>${items || '<p style="color:#999;font-size:13px;">Sin novedades.</p>'}${des}</section>`;
+    }).join('');
+    return `<div id="${id}" class="grid-cat ${id === 'Tandil' ? 'active' : ''}">${html}</div>`;
+  }
+
+  function generarTabBoletin(bol) {
+    if (!bol) {
+      return `<div id="Boletin" class="grid-cat" style="grid-template-columns: 1fr;"><div style="text-align:center; padding: 40px; width:100%; color:#777;">Todavía no hay un Boletín Oficial registrado.</div></div>`;
+    }
+
+    const titulo = bol.numeroEdicion ? 'Edición Nº ' + bol.numeroEdicion : 'ID ' + bol.id;
+    const fecha = bol.fechaPublicacion ? ' (' + bol.fechaPublicacion + ')' : '';
+
+    let html = `<section class="tarjeta" style="grid-column: 1 / -1; max-width: 800px; margin: 0 auto;">`;
+    html += `<h2>Último Boletín: ${escaparHtml(titulo)}${escaparHtml(fecha)}</h2>`;
+    html += `<p><a href="${escaparHtml(bol.url)}" target="_blank" rel="noopener" style="color:#0b5fff; text-decoration:none; font-weight:bold;">📄 Ver PDF Original en SIBOM</a></p>`;
+
+    if (bol.items && bol.items.length > 0) {
+      html += `<div style="margin-top:20px;">`;
+      bol.items.forEach(i => {
+        html += `<div style="margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid #eee;">
+                   <strong style="color:#1a1a1a; display:block; margin-bottom:4px; font-size: 15px;">${escaparHtml(i.tipo)} Nº ${escaparHtml(i.numero)}</strong>
+                   <span style="color:#444; font-size:14px; line-height:1.5;">${escaparHtml(i.resumen)}</span>
+                 </div>`;
+      });
+      html += `</div>`;
+    } else {
+      html += `<p style="color:#999;font-size:13px;">No se pudo extraer el resumen automático de las normas para este boletín.</p>`;
+    }
+
+    html += `</section>`;
+    return `<div id="Boletin" class="grid-cat" style="display:none; grid-template-columns: 1fr;">${html}</div>`;
+  }
+
+  function renderizarPanel(estado) {
+    const main = document.getElementById('main-content');
+    const fechaEl = document.getElementById('fecha-actualizacion');
+
+    if (!estado || !estado.fecha) {
+      main.innerHTML = `<div class="estado-error">Corré el Master Watcher al menos una vez para generar datos.</div>`;
+      fechaEl.textContent = 'Sin datos aún';
+      return;
+    }
+
+    const fechaTexto = new Date(estado.fecha).toLocaleString('es-AR', {
+      day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+    fechaEl.textContent = 'Actualizado: ' + fechaTexto;
+
+    main.innerHTML =
+      generarGridNoticias(estado.Tandil || [], 'Tandil') +
+      generarGridNoticias(estado.Nacional || [], 'Nacional') +
+      generarTabBoletin(estado.Boletin);
+
+    const buscador = document.getElementById('buscador-input');
+    buscador.disabled = false;
+    buscador.addEventListener('input', function (e) {
+      const q = e.target.value.trim().toLowerCase();
+      document.querySelectorAll('.item').forEach(el => el.classList.toggle('oculto', !!q && el.dataset.texto.indexOf(q) === -1));
+      document.querySelectorAll('.tarjeta').forEach(card => {
+        if (card.parentNode.id === 'Boletin') return;
+        const visibles = card.querySelectorAll('.item:not(.oculto)').length;
+        card.classList.toggle('oculto', !!q && visibles === 0 && card.dataset.sitio.indexOf(q) === -1);
+      });
+    });
+  }
+
+  function mostrarError(mensaje) {
+    document.getElementById('main-content').innerHTML =
+      `<div class="estado-error">
+         No se pudo cargar el panel.<br><small>${escaparHtml(mensaje)}</small>
+         <br><button onclick="cargarDatos()">Reintentar</button>
+       </div>`;
+    document.getElementById('fecha-actualizacion').textContent = 'Error al cargar';
+  }
+
+  function cargarDatos() {
+    document.getElementById('main-content').innerHTML = `<div class="estado-carga" id="estado-carga">Cargando datos del panel...</div>`;
+
+    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf('PEGA_ACA') === 0) {
+      mostrarError('Falta configurar APPS_SCRIPT_URL en index.html con la URL de tu Web App.');
+      return;
+    }
+
+    fetch(APPS_SCRIPT_URL)
+      .then(res => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(estado => renderizarPanel(estado))
+      .catch(err => mostrarError(err.message));
+  }
+
+  cargarDatos();
+  // Refresca los datos en pantalla cada 5 minutos, sin recargar la página.
+  setInterval(cargarDatos, 5 * 60 * 1000);
+</script>
+
+</body>
+</html>
