@@ -866,6 +866,7 @@
     <p class="reclamos-texto">Las notas al Intendente o a cualquiera de sus Secretarios deben ser presentadas de forma presencial en la Mesa de Entradas del Municipio (Belgrano 485), o bien pueden ser enviadas como adjunto a <strong>mesa_entradas@tandil.gov.ar</strong>.</p>
     <div class="reclamos-acciones">
       <button class="accion-btn" type="button" onclick="copiarAlPortapapeles('mesa_entradas@tandil.gov.ar', this)">📋 Copiar email de Mesa de Entradas</button>
+      <a class="accion-btn" href="mailto:mesa_entradas@tandil.gov.ar">✉ Enviar mail</a>
     </div>
 
     <div class="reclamos-titulo" style="margin-top:22px;">Notas al Presidente del Concejo Deliberante</div>
@@ -873,6 +874,7 @@
     <p class="reclamos-texto">Las notas al Presidente del Concejo Deliberante deben ser presentadas en la Secretaría de la Presidencia del Honorable Concejo Deliberante, ubicada en el primer piso del Palacio Municipal (Belgrano 485), o bien enviar un correo a <strong>secretaria@hcdtandil.gob.ar</strong> o un WhatsApp al <strong>249 467-0083</strong>.</p>
     <div class="reclamos-acciones">
       <button class="accion-btn" type="button" onclick="copiarAlPortapapeles('secretaria@hcdtandil.gob.ar', this)">📋 Copiar email de la Secretaría del HCD</button>
+      <a class="accion-btn" href="mailto:secretaria@hcdtandil.gob.ar">✉ Enviar mail</a>
       <a class="accion-btn whatsapp" href="https://wa.me/5492494670083" target="_blank" rel="noopener">💬 Chat</a>
       <button class="accion-btn-icon" type="button" onclick="compartirWhatsapp('Concejo Deliberante de Tandil - Secretaría: WhatsApp 249 467-0083 (https://wa.me/5492494670083)')" aria-label="Compartir por WhatsApp" title="Compartir por WhatsApp">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
@@ -1039,7 +1041,10 @@
       </div>
       <div class="reclamos-contacto-fila">
         <span class="nombre">Email</span>
-        <button class="accion-btn" type="button" onclick="copiarAlPortapapeles('omic@tandil.gov.ar', this)">📋 Copiar</button>
+        <div class="reclamos-fila-botones">
+          <a class="accion-btn" href="mailto:omic@tandil.gov.ar">✉ Enviar</a>
+          <button class="accion-btn" type="button" onclick="copiarAlPortapapeles('omic@tandil.gov.ar', this)">📋 Copiar</button>
+        </div>
       </div>
       <div class="reclamos-contacto-fila">
         <span class="nombre">Formulario de denuncia</span>
@@ -1061,9 +1066,7 @@
     <p class="reclamos-texto">Si habiendo consultado todo lo anterior podés confirmar que la obra que querés denunciar incumple con las normas, tenés que escribir una nota dirigida al Director/a de Obras Privadas del Municipio incluyendo: 1) Domicilio 2) Norma incumplida 3) Fotografías (opcional).</p>
     <p class="reclamos-texto">La nota debe ser firmada por el/la denunciante incluyendo: a) Nombre completo; b) Documento de identidad; c) Domicilio y d) Número de teléfono. <strong>Esta denuncia es anónima</strong>, aunque el personal municipal requiere esta información para poder contactar con el/la denunciante en caso de que sea necesaria más información.</p>
 
-    <div class="reclamos-subtitulo">Turismo</div>
-
-    <div class="reclamos-titulo">Alojamientos temporarios</div>
+    <div class="reclamos-titulo" style="margin-top:22px;">Turismo</div>
     <p class="reclamos-texto">Si tenés un alojamiento temporario, te compartimos el instructivo para su habilitación.</p>
     <div class="reclamos-acciones">
       <a class="accion-btn externo" href="https://drive.google.com/file/d/1HKfKUyMPgh5FZOm0_M6tNZ8zb950kuNX/view" target="_blank" rel="noopener">⬇ Ver instructivo de habilitación</a>
@@ -1087,26 +1090,58 @@
 
     <div class="reclamos-titulo" style="margin-top:22px;">Juzgados de Faltas <span style="font-weight:400; color:var(--text-faint); font-size:12px;">(Lun a Vie 7:30 a 13:30)</span></div>
     <div class="reclamos-lista-contactos" style="margin-top:8px;">
-      <div class="reclamos-contacto-fila" style="flex-wrap:wrap; row-gap:8px;">
+      <div class="reclamos-contacto-fila">
         <span class="nombre">Juzgado 1</span>
-        <div class="reclamos-acciones" style="margin-top:0;">
-          <a class="accion-btn telefono" href="tel:2494423230">📞 2494423230</a>
-          <a class="accion-btn" href="mailto:faltas1@tandil.gov.ar">✉ Email</a>
-        </div>
-        <div class="reclamos-acciones" style="margin-top:0; width:100%;">
-          <button class="accion-btn whatsapp" type="button" onclick="compartirWhatsapp(textoJuzgado1())">📤 Compartir</button>
-          <button class="accion-btn" type="button" onclick="copiarAlPortapapeles(textoJuzgado1(), this)">📋 Copiar</button>
+      </div>
+      <div class="reclamos-contacto-fila" style="padding-left:14px;">
+        <span class="nombre" style="font-weight:400; color:var(--text-faint); font-size:12px;">Teléfono</span>
+        <div class="reclamos-fila-botones">
+          <a class="accion-btn telefono" href="tel:2494423230">📞 Llamar</a>
+          <button class="accion-btn-icon" type="button" onclick="copiarAlPortapapeles('249 442-3230', this)" aria-label="Copiar número" title="Copiar número">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          </button>
         </div>
       </div>
-      <div class="reclamos-contacto-fila" style="flex-wrap:wrap; row-gap:8px;">
-        <span class="nombre">Juzgado 2</span>
-        <div class="reclamos-acciones" style="margin-top:0;">
-          <a class="accion-btn telefono" href="tel:2494442481">📞 2494442481</a>
-          <a class="accion-btn" href="mailto:faltas2@tandil.gov.ar">✉ Email</a>
+      <div class="reclamos-contacto-fila" style="padding-left:14px;">
+        <span class="nombre" style="font-weight:400; color:var(--text-faint); font-size:12px;">Email</span>
+        <div class="reclamos-fila-botones">
+          <a class="accion-btn" href="mailto:faltas1@tandil.gov.ar">✉ Enviar</a>
+          <button class="accion-btn-icon" type="button" onclick="copiarAlPortapapeles('faltas1@tandil.gov.ar', this)" aria-label="Copiar email" title="Copiar email">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          </button>
         </div>
-        <div class="reclamos-acciones" style="margin-top:0; width:100%;">
+      </div>
+      <div class="reclamos-contacto-fila" style="padding-left:14px; border-bottom:1px solid var(--border);">
+        <div class="reclamos-acciones" style="margin-top:0;">
+          <button class="accion-btn whatsapp" type="button" onclick="compartirWhatsapp(textoJuzgado1())">📤 Compartir</button>
+          <button class="accion-btn" type="button" onclick="copiarAlPortapapeles(textoJuzgado1(), this)">📋 Copiar todo</button>
+        </div>
+      </div>
+      <div class="reclamos-contacto-fila">
+        <span class="nombre">Juzgado 2</span>
+      </div>
+      <div class="reclamos-contacto-fila" style="padding-left:14px;">
+        <span class="nombre" style="font-weight:400; color:var(--text-faint); font-size:12px;">Teléfono</span>
+        <div class="reclamos-fila-botones">
+          <a class="accion-btn telefono" href="tel:2494442481">📞 Llamar</a>
+          <button class="accion-btn-icon" type="button" onclick="copiarAlPortapapeles('249 444-2481', this)" aria-label="Copiar número" title="Copiar número">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          </button>
+        </div>
+      </div>
+      <div class="reclamos-contacto-fila" style="padding-left:14px;">
+        <span class="nombre" style="font-weight:400; color:var(--text-faint); font-size:12px;">Email</span>
+        <div class="reclamos-fila-botones">
+          <a class="accion-btn" href="mailto:faltas2@tandil.gov.ar">✉ Enviar</a>
+          <button class="accion-btn-icon" type="button" onclick="copiarAlPortapapeles('faltas2@tandil.gov.ar', this)" aria-label="Copiar email" title="Copiar email">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          </button>
+        </div>
+      </div>
+      <div class="reclamos-contacto-fila" style="padding-left:14px;">
+        <div class="reclamos-acciones" style="margin-top:0;">
           <button class="accion-btn whatsapp" type="button" onclick="compartirWhatsapp(textoJuzgado2())">📤 Compartir</button>
-          <button class="accion-btn" type="button" onclick="copiarAlPortapapeles(textoJuzgado2(), this)">📋 Copiar</button>
+          <button class="accion-btn" type="button" onclick="copiarAlPortapapeles(textoJuzgado2(), this)">📋 Copiar todo</button>
         </div>
       </div>
     </div>
@@ -1123,17 +1158,19 @@
       <button class="accion-btn" type="button" onclick="copiarAlPortapapeles(textoJuzgadoFamilia(), this)">📋 Copiar toda la info</button>
     </div>
 
-    <div class="reclamos-subtitulo">Consejo de Arbolado Público</div>
+    <div class="reclamos-titulo" style="margin-top:22px;">Consejo de Arbolado Público</div>
     <p class="reclamos-texto">Para comunicarte con las autoridades del Consejo de Arbolado Público debés enviar un mail con el tema que deseás tratar. Recordá que las reuniones del consejo normalmente se realizan el primer viernes del mes a las 9 h. en el primer piso del Palacio Municipal, en la sala 15 de Junio (Belgrano 485).</p>
     <div class="reclamos-acciones">
       <button class="accion-btn" type="button" onclick="copiarAlPortapapeles('arboladotandil@gmail.com', this)">📋 Copiar email</button>
+      <a class="accion-btn" href="mailto:arboladotandil@gmail.com">✉ Enviar mail</a>
       <a class="accion-btn externo" href="https://www.google.com/maps/search/?api=1&query=Belgrano+485,+Tandil,+Buenos+Aires,+Argentina" target="_blank" rel="noopener">🗺️ Ver en Maps</a>
     </div>
 
-    <div class="reclamos-subtitulo">Foro de Seguridad</div>
+    <div class="reclamos-titulo" style="margin-top:22px;">Foro de Seguridad</div>
     <p class="reclamos-texto">Para comunicarte con las autoridades del Foro de Seguridad debés enviar un mail con el tema que deseás tratar. Recordá que las reuniones del Foro normalmente se realizan el primer miércoles del mes a las 18 h. en el primer piso de la Cámara Empresaria (Mitre 856).</p>
     <div class="reclamos-acciones">
       <button class="accion-btn" type="button" onclick="copiarAlPortapapeles('forodeseguridadtandil@gmail.com', this)">📋 Copiar email</button>
+      <a class="accion-btn" href="mailto:forodeseguridadtandil@gmail.com">✉ Enviar mail</a>
       <a class="accion-btn externo" href="https://www.google.com/maps/search/?api=1&query=Mitre+856,+Tandil,+Buenos+Aires,+Argentina" target="_blank" rel="noopener">🗺️ Ver en Maps</a>
     </div>
 
