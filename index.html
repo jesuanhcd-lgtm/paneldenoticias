@@ -22,6 +22,7 @@
     --accent-tandil: #0E9C8C;
     --accent-nacional: #3454D1;
     --accent-boletin: #B4790E;
+    --accent-internacional: #7C4FE0;
     --live-dot: #0E9C8C;
     --danger: #C0392B;
     --shadow: 0 1px 2px rgba(20, 22, 28, 0.04), 0 4px 16px rgba(20, 22, 28, 0.05);
@@ -45,6 +46,7 @@
     --accent-tandil: #2FD4BE;
     --accent-nacional: #6C87F5;
     --accent-boletin: #E3A93F;
+    --accent-internacional: #B39DFF;
     --live-dot: #2FD4BE;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.28);
   }
@@ -221,6 +223,7 @@
   .tab:hover { color: var(--text); }
   .tab.active[data-cat="Tandil"]   { color: var(--text); border-color: var(--accent-tandil); }
   .tab.active[data-cat="Nacional"] { color: var(--text); border-color: var(--accent-nacional); }
+  .tab.active[data-cat="Internacional"] { color: var(--text); border-color: var(--accent-internacional); }
   .tab.active[data-cat="Boletin"]  { color: var(--text); border-color: var(--accent-boletin); }
   .tab.active[data-cat="Reclamos"] { color: var(--text); border-color: var(--accent-primary); }
 
@@ -339,6 +342,7 @@
   }
   .tarjeta.cat-tandil::before   { background: var(--accent-tandil); }
   .tarjeta.cat-nacional::before { background: var(--accent-nacional); }
+  .tarjeta.cat-internacional::before { background: var(--accent-internacional); }
   .tarjeta.cat-boletin::before  { background: var(--accent-boletin); }
   .tarjeta.cat-reclamos::before { background: var(--accent-primary); }
 
@@ -830,6 +834,7 @@
     <div class="tabs" role="tablist">
       <div class="tab active" data-cat="Tandil" onclick="switchTab('Tandil')" role="tab">Tandil</div>
       <div class="tab" data-cat="Nacional" onclick="switchTab('Nacional')" role="tab">Nacionales</div>
+      <div class="tab" data-cat="Internacional" onclick="switchTab('Internacional')" role="tab">Internacional</div>
       <div class="tab" data-cat="Boletin" onclick="switchTab('Boletin')" role="tab">Boletín SIBOM</div>
       <div class="tab" data-cat="Reclamos" onclick="switchTab('Reclamos')" role="tab">Reclamos</div>
     </div>
@@ -1668,6 +1673,8 @@
   }
 
   // ---------- RENDER PRINCIPAL ----------
+  let ultimoEstadoJSON = null;
+
   function renderizarPanel(estado) {
     const main = document.getElementById('main-content');
     const statusEl = document.getElementById('status-line');
@@ -1679,12 +1686,35 @@
     }
 
     ultimaFechaActualizacion = new Date(estado.fecha);
-    ultimoConteoFuentes = (estado.Tandil || []).length + (estado.Nacional || []).length;
+    ultimoConteoFuentes = (estado.Tandil || []).length + (estado.Nacional || []).length + (estado.Internacional || []).length;
     actualizarStatusLine();
+
+    // Ahora las noticias se actualizan por lotes rotativos (no todas juntas),
+    // así que puede llegar un sondeo con el JSON sin cambios reales desde el
+    // anterior. Si es igual al último que ya pintamos, no tocamos el DOM:
+    // evita parpadeos y saltos de scroll innecesarios para quien está leyendo.
+    const estadoJSON = JSON.stringify(estado);
+    const esPrimerRender = ultimoEstadoJSON === null;
+    if (estadoJSON === ultimoEstadoJSON) {
+      return;
+    }
+    ultimoEstadoJSON = estadoJSON;
+
+    // Guardamos la posición de scroll y qué desplegables de "caídas" estaban
+    // abiertos, para restaurarlos después de repintar y no desorientar a
+    // alguien que está en el medio de la lectura cuando llega una
+    // actualización en segundo plano.
+    const scrollPrevio = window.scrollY;
+    const desplegablesAbiertos = new Set(
+      Array.from(document.querySelectorAll('.desaparecidas[open]'))
+        .map(det => det.closest('.tarjeta') && det.closest('.tarjeta').dataset.sitio)
+        .filter(Boolean)
+    );
 
     main.innerHTML =
       generarGridNoticias(estado.Tandil || [], 'Tandil', 'cat-tandil') +
       generarGridNoticias(estado.Nacional || [], 'Nacional', 'cat-nacional') +
+      generarGridNoticias(estado.Internacional || [], 'Internacional', 'cat-internacional') +
       generarTabBoletin(estado.Boletin);
 
     if (modoSeleccionActivo && seleccionMapa.size > 0) {
@@ -1692,6 +1722,24 @@
         if (seleccionMapa.has(item.dataset.link)) item.classList.add('seleccionado');
       });
     }
+
+    if (desplegablesAbiertos.size > 0) {
+      document.querySelectorAll('.tarjeta').forEach(card => {
+        if (desplegablesAbiertos.has(card.dataset.sitio)) {
+          const det = card.querySelector('.desaparecidas');
+          if (det) det.open = true;
+        }
+      });
+    }
+
+    // generarGridNoticias siempre marca "Tandil" como la grilla visible por
+    // defecto al reconstruir el HTML; esto re-sincroniza la vista con la
+    // pestaña que el usuario tenía realmente seleccionada (incluida
+    // Boletín o Reclamos, que viven fuera de #main-content).
+    const tabActiva = document.querySelector('.tab.active');
+    if (tabActiva) switchTab(tabActiva.dataset.cat);
+
+    if (!esPrimerRender) window.scrollTo(0, scrollPrevio);
 
     const buscador = document.getElementById('buscador-input');
     buscador.disabled = false;
@@ -1758,7 +1806,9 @@
   }
 
   function cargarDatos() {
-    document.getElementById('main-content').innerHTML = `<div class="estado-carga">Cargando datos del panel…</div>`;
+    if (ultimoEstadoJSON === null) {
+      document.getElementById('main-content').innerHTML = `<div class="estado-carga">Cargando datos del panel…</div>`;
+    }
 
     if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf('PEGA_ACA') === 0) {
       mostrarError('Falta configurar APPS_SCRIPT_URL en index.html con la URL de tu Web App.');
