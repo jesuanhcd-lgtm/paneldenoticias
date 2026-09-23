@@ -22,7 +22,6 @@
     --accent-tandil: #0E9C8C;
     --accent-nacional: #3454D1;
     --accent-boletin: #B4790E;
-    --accent-internacional: #7C4FE0;
     --live-dot: #0E9C8C;
     --danger: #C0392B;
     --shadow: 0 1px 2px rgba(20, 22, 28, 0.04), 0 4px 16px rgba(20, 22, 28, 0.05);
@@ -46,7 +45,6 @@
     --accent-tandil: #2FD4BE;
     --accent-nacional: #6C87F5;
     --accent-boletin: #E3A93F;
-    --accent-internacional: #B39DFF;
     --live-dot: #2FD4BE;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.28);
   }
@@ -224,7 +222,6 @@
   .tab:hover { color: var(--text); }
   .tab.active[data-cat="Tandil"]   { color: var(--text); border-color: var(--accent-tandil); }
   .tab.active[data-cat="Nacional"] { color: var(--text); border-color: var(--accent-nacional); }
-  .tab.active[data-cat="Internacional"] { color: var(--text); border-color: var(--accent-internacional); }
   .tab.active[data-cat="Boletin"]  { color: var(--text); border-color: var(--accent-boletin); }
   .tab.active[data-cat="Reclamos"] { color: var(--text); border-color: var(--accent-primary); }
 
@@ -343,7 +340,6 @@
   }
   .tarjeta.cat-tandil::before   { background: var(--accent-tandil); }
   .tarjeta.cat-nacional::before { background: var(--accent-nacional); }
-  .tarjeta.cat-internacional::before { background: var(--accent-internacional); }
   .tarjeta.cat-boletin::before  { background: var(--accent-boletin); }
   .tarjeta.cat-reclamos::before { background: var(--accent-primary); }
 
@@ -836,7 +832,6 @@
     <div class="tabs" role="tablist">
       <div class="tab active" data-cat="Tandil" onclick="switchTab('Tandil')" role="tab">Tandil</div>
       <div class="tab" data-cat="Nacional" onclick="switchTab('Nacional')" role="tab">Nacionales</div>
-      <div class="tab" data-cat="Internacional" onclick="switchTab('Internacional')" role="tab">Internacional</div>
       <div class="tab" data-cat="Boletin" onclick="switchTab('Boletin')" role="tab">Boletín SIBOM</div>
     </div>
   </div>
@@ -1704,7 +1699,7 @@
     }
 
     ultimaFechaActualizacion = new Date(estado.fecha);
-    ultimoConteoFuentes = (estado.Tandil || []).length + (estado.Nacional || []).length + (estado.Internacional || []).length;
+    ultimoConteoFuentes = (estado.Tandil || []).length + (estado.Nacional || []).length;
     actualizarStatusLine();
 
     // Ahora las noticias se actualizan por lotes rotativos (no todas juntas),
@@ -1732,7 +1727,6 @@
     main.innerHTML =
       generarGridNoticias(estado.Tandil || [], 'Tandil', 'cat-tandil') +
       generarGridNoticias(estado.Nacional || [], 'Nacional', 'cat-nacional') +
-      generarGridNoticias(estado.Internacional || [], 'Internacional', 'cat-internacional') +
       generarTabBoletin(estado.Boletin);
 
     if (modoSeleccionActivo && seleccionMapa.size > 0) {
