@@ -22,7 +22,6 @@
     --accent-tandil: #0E9C8C;
     --accent-nacional: #3454D1;
     --accent-boletin: #B4790E;
-    --accent-internacional: #7C4FE0;
     --live-dot: #0E9C8C;
     --danger: #C0392B;
     --shadow: 0 1px 2px rgba(20, 22, 28, 0.04), 0 4px 16px rgba(20, 22, 28, 0.05);
@@ -46,7 +45,6 @@
     --accent-tandil: #2FD4BE;
     --accent-nacional: #6C87F5;
     --accent-boletin: #E3A93F;
-    --accent-internacional: #B39DFF;
     --live-dot: #2FD4BE;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.28);
   }
@@ -223,7 +221,6 @@
   .tab:hover { color: var(--text); }
   .tab.active[data-cat="Tandil"]   { color: var(--text); border-color: var(--accent-tandil); }
   .tab.active[data-cat="Nacional"] { color: var(--text); border-color: var(--accent-nacional); }
-  .tab.active[data-cat="Internacional"] { color: var(--text); border-color: var(--accent-internacional); }
   .tab.active[data-cat="Boletin"]  { color: var(--text); border-color: var(--accent-boletin); }
   .tab.active[data-cat="Reclamos"] { color: var(--text); border-color: var(--accent-primary); }
 
@@ -342,7 +339,6 @@
   }
   .tarjeta.cat-tandil::before   { background: var(--accent-tandil); }
   .tarjeta.cat-nacional::before { background: var(--accent-nacional); }
-  .tarjeta.cat-internacional::before { background: var(--accent-internacional); }
   .tarjeta.cat-boletin::before  { background: var(--accent-boletin); }
   .tarjeta.cat-reclamos::before { background: var(--accent-primary); }
 
@@ -834,7 +830,6 @@
     <div class="tabs" role="tablist">
       <div class="tab active" data-cat="Tandil" onclick="switchTab('Tandil')" role="tab">Tandil</div>
       <div class="tab" data-cat="Nacional" onclick="switchTab('Nacional')" role="tab">Nacionales</div>
-      <div class="tab" data-cat="Internacional" onclick="switchTab('Internacional')" role="tab">Internacional</div>
       <div class="tab" data-cat="Boletin" onclick="switchTab('Boletin')" role="tab">Boletín SIBOM</div>
       <div class="tab" data-cat="Reclamos" onclick="switchTab('Reclamos')" role="tab">Reclamos</div>
     </div>
@@ -963,6 +958,18 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
           </button>
           <button class="accion-btn-icon" type="button" onclick="compartirWhatsapp('Vialidad - WhatsApp: https://wa.me/5492494282176')" aria-label="Compartir por WhatsApp" title="Compartir por WhatsApp">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+          </button>
+        </div>
+      </div>
+      <div class="reclamos-contacto-fila">
+        <span class="nombre">Servicios</span>
+        <div class="reclamos-fila-botones">
+          <a class="accion-btn whatsapp" href="https://wa.me/5492494607978" target="_blank" rel="noopener">💬 Chat</a>
+          <button class="accion-btn-icon" type="button" onclick="copiarAlPortapapeles('249 460-7978', this)" aria-label="Copiar número" title="Copiar número">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          </button>
+          <button class="accion-btn-icon" type="button" onclick="compartirWhatsapp('Servicios - WhatsApp: https://wa.me/5492494607978')" aria-label="Compartir por WhatsApp" title="Compartir por WhatsApp">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
           </button>
         </div>
@@ -1200,6 +1207,8 @@
 
   let ultimaFechaActualizacion = null;
   let ultimoConteoFuentes = 0;
+  let pestañaActiva = 'Tandil';
+  let datosYaCargados = false;
 
   function escaparHtml(texto) {
     return String(texto)
@@ -1558,6 +1567,7 @@
 
   // ---------- TABS ----------
   function switchTab(cat) {
+    pestañaActiva = cat;
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.grid-cat').forEach(g => {
       g.classList.remove('active');
@@ -1567,8 +1577,10 @@
     document.querySelector('.tab[data-cat="' + cat + '"]').classList.add('active');
 
     const panel = document.getElementById(cat);
-    panel.classList.add('active');
-    panel.style.display = 'grid';
+    if (panel) {
+      panel.classList.add('active');
+      panel.style.display = 'grid';
+    }
   }
 
   // ---------- TIEMPO RELATIVO ----------
@@ -1635,13 +1647,14 @@
         ${des}
       </section>`;
     }).join('');
-    return `<div id="${id}" class="grid-cat ${id === 'Tandil' ? 'active' : ''}">${html}</div>`;
+    return `<div id="${id}" class="grid-cat ${id === pestañaActiva ? 'active' : ''}">${html}</div>`;
   }
 
   // ---------- RENDER: BOLETÍN ----------
   function generarTabBoletin(bol) {
+    const claseActiva = pestañaActiva === 'Boletin' ? 'active' : '';
     if (!bol) {
-      return `<div id="Boletin" class="grid-cat" style="grid-template-columns: 1fr;">
+      return `<div id="Boletin" class="grid-cat ${claseActiva}" style="grid-template-columns: 1fr;">
         <div class="vacio" style="text-align:center; padding: 50px 20px; width:100%;">Todavía no hay un Boletín Oficial registrado.</div>
       </div>`;
     }
@@ -1669,12 +1682,10 @@
     }
 
     html += `</section>`;
-    return `<div id="Boletin" class="grid-cat" style="display:none; grid-template-columns: 1fr;">${html}</div>`;
+    return `<div id="Boletin" class="grid-cat ${claseActiva}" style="grid-template-columns: 1fr;">${html}</div>`;
   }
 
   // ---------- RENDER PRINCIPAL ----------
-  let ultimoEstadoJSON = null;
-
   function renderizarPanel(estado) {
     const main = document.getElementById('main-content');
     const statusEl = document.getElementById('status-line');
@@ -1686,35 +1697,12 @@
     }
 
     ultimaFechaActualizacion = new Date(estado.fecha);
-    ultimoConteoFuentes = (estado.Tandil || []).length + (estado.Nacional || []).length + (estado.Internacional || []).length;
+    ultimoConteoFuentes = (estado.Tandil || []).length + (estado.Nacional || []).length;
     actualizarStatusLine();
-
-    // Ahora las noticias se actualizan por lotes rotativos (no todas juntas),
-    // así que puede llegar un sondeo con el JSON sin cambios reales desde el
-    // anterior. Si es igual al último que ya pintamos, no tocamos el DOM:
-    // evita parpadeos y saltos de scroll innecesarios para quien está leyendo.
-    const estadoJSON = JSON.stringify(estado);
-    const esPrimerRender = ultimoEstadoJSON === null;
-    if (estadoJSON === ultimoEstadoJSON) {
-      return;
-    }
-    ultimoEstadoJSON = estadoJSON;
-
-    // Guardamos la posición de scroll y qué desplegables de "caídas" estaban
-    // abiertos, para restaurarlos después de repintar y no desorientar a
-    // alguien que está en el medio de la lectura cuando llega una
-    // actualización en segundo plano.
-    const scrollPrevio = window.scrollY;
-    const desplegablesAbiertos = new Set(
-      Array.from(document.querySelectorAll('.desaparecidas[open]'))
-        .map(det => det.closest('.tarjeta') && det.closest('.tarjeta').dataset.sitio)
-        .filter(Boolean)
-    );
 
     main.innerHTML =
       generarGridNoticias(estado.Tandil || [], 'Tandil', 'cat-tandil') +
       generarGridNoticias(estado.Nacional || [], 'Nacional', 'cat-nacional') +
-      generarGridNoticias(estado.Internacional || [], 'Internacional', 'cat-internacional') +
       generarTabBoletin(estado.Boletin);
 
     if (modoSeleccionActivo && seleccionMapa.size > 0) {
@@ -1722,24 +1710,6 @@
         if (seleccionMapa.has(item.dataset.link)) item.classList.add('seleccionado');
       });
     }
-
-    if (desplegablesAbiertos.size > 0) {
-      document.querySelectorAll('.tarjeta').forEach(card => {
-        if (desplegablesAbiertos.has(card.dataset.sitio)) {
-          const det = card.querySelector('.desaparecidas');
-          if (det) det.open = true;
-        }
-      });
-    }
-
-    // generarGridNoticias siempre marca "Tandil" como la grilla visible por
-    // defecto al reconstruir el HTML; esto re-sincroniza la vista con la
-    // pestaña que el usuario tenía realmente seleccionada (incluida
-    // Boletín o Reclamos, que viven fuera de #main-content).
-    const tabActiva = document.querySelector('.tab.active');
-    if (tabActiva) switchTab(tabActiva.dataset.cat);
-
-    if (!esPrimerRender) window.scrollTo(0, scrollPrevio);
 
     const buscador = document.getElementById('buscador-input');
     buscador.disabled = false;
@@ -1805,8 +1775,32 @@
     document.getElementById('status-line').innerHTML = '<span>Error al cargar</span>';
   }
 
+  // Reintenta la petición hasta 2 veces más (con espera creciente) antes de
+  // darla por perdida: los Web Apps de Apps Script devuelven errores
+  // intermitentes (404/502) de tanto en tanto que suelen resolverse solos.
+  function obtenerDatosConReintento(intento) {
+    return fetch(APPS_SCRIPT_URL)
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .catch(function (err) {
+        if (intento < 2) {
+          return new Promise(function (resolve) { setTimeout(resolve, 1500 * (intento + 1)); })
+            .then(function () { return obtenerDatosConReintento(intento + 1); });
+        }
+        throw err;
+      });
+  }
+
   function cargarDatos() {
-    if (ultimoEstadoJSON === null) {
+    const esPrimeraCarga = !datosYaCargados;
+
+    // Solo mostramos la pantalla de "Cargando..." en la primera visita.
+    // En los refrescos automáticos (cada 5 min) NO se borra el contenido
+    // actual: si la respuesta tarda o falla, el usuario sigue viendo el
+    // panel con los datos previos en vez de una pantalla vacía o de error.
+    if (esPrimeraCarga) {
       document.getElementById('main-content').innerHTML = `<div class="estado-carga">Cargando datos del panel…</div>`;
     }
 
@@ -1815,13 +1809,22 @@
       return;
     }
 
-    fetch(APPS_SCRIPT_URL)
-      .then(res => {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
+    obtenerDatosConReintento(0)
+      .then(function (estado) {
+        datosYaCargados = true;
+        renderizarPanel(estado);
       })
-      .then(estado => renderizarPanel(estado))
-      .catch(err => mostrarError(err.message));
+      .catch(function (err) {
+        if (esPrimeraCarga) {
+          mostrarError(err.message);
+        } else {
+          // Falla silenciosa en un refresco de fondo: se conserva lo que ya
+          // estaba en pantalla. El "Actualizado hace X min" del header queda
+          // como único indicador (sigue sumando minutos) de que no hubo un
+          // refresco reciente, sin interrumpir al usuario.
+          console.warn('No se pudo refrescar el panel (se mantiene la versión anterior en pantalla):', err.message);
+        }
+      });
   }
 
   inicializarTema();
