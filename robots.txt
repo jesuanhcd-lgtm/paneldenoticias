@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://paneldenoticias.com.ar/sitemap.xml
