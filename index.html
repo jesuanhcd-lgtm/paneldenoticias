@@ -263,6 +263,7 @@
   .tab.active[data-cat="Tandil"]   { color: var(--text); border-color: var(--accent-tandil); }
   .tab.active[data-cat="Nacional"] { color: var(--text); border-color: var(--accent-nacional); }
   .tab.active[data-cat="Boletin"]  { color: var(--text); border-color: var(--accent-boletin); }
+  .tab.active[data-cat="BoletinPBA"] { color: var(--text); border-color: var(--accent-boletin); }
   .tab.active[data-cat="Reclamos"] { color: var(--text); border-color: var(--accent-primary); }
 
   /* ===== SEARCH ===== */
@@ -596,6 +597,12 @@
     border-radius: 5px;
     margin-bottom: 6px;
   }
+  .boletin-organismo {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    margin-bottom: 4px;
+  }
   .boletin-resumen {
     font-size: calc(13.5px * var(--escala-fuente));
     line-height: 1.55;
@@ -872,7 +879,8 @@
     <div class="tabs" role="tablist">
       <div class="tab active" data-cat="Tandil" onclick="switchTab('Tandil')" role="tab">Tandil</div>
       <div class="tab" data-cat="Nacional" onclick="switchTab('Nacional')" role="tab">Nacionales</div>
-      <div class="tab" data-cat="Boletin" onclick="switchTab('Boletin')" role="tab">Boletín SIBOM</div>
+      <div class="tab" data-cat="Boletin" onclick="switchTab('Boletin')" role="tab">Boletín Oficial Tandil</div>
+      <div class="tab" data-cat="BoletinPBA" onclick="switchTab('BoletinPBA')" role="tab">Boletín Oficial PBA</div>
     </div>
   </div>
 </header>
@@ -1694,11 +1702,11 @@
     return `<div id="${id}" class="grid-cat ${id === 'Tandil' ? 'active' : ''}">${html}</div>`;
   }
 
-  // ---------- RENDER: BOLETÍN ----------
+  // ---------- RENDER: BOLETÍN OFICIAL TANDIL (SIBOM) ----------
   function generarTabBoletin(bol) {
     if (!bol) {
       return `<div id="Boletin" class="grid-cat" style="grid-template-columns: 1fr;">
-        <div class="vacio" style="text-align:center; padding: 50px 20px; width:100%;">Todavía no hay un Boletín Oficial registrado.</div>
+        <div class="vacio" style="text-align:center; padding: 50px 20px; width:100%;">Todavía no hay un Boletín Oficial de Tandil registrado.</div>
       </div>`;
     }
 
@@ -1707,7 +1715,7 @@
 
     let html = `<section class="tarjeta cat-boletin" style="grid-column: 1 / -1; max-width: 780px; margin: 0 auto;">`;
     html += `<div class="boletin-header">
-      <h2 style="font-family:var(--font-display); font-weight:600; font-size:16px;">Último Boletín: ${escaparHtml(titulo)}<span style="color:var(--text-faint); font-weight:400;">${escaparHtml(fecha)}</span></h2>
+      <h2 style="font-family:var(--font-display); font-weight:600; font-size:16px;">Boletín Oficial Tandil: ${escaparHtml(titulo)}<span style="color:var(--text-faint); font-weight:400;">${escaparHtml(fecha)}</span></h2>
       <a class="boletin-pdf-link" href="${escaparHtml(bol.url)}" target="_blank" rel="noopener">↓ PDF original (SIBOM)</a>
     </div>`;
 
@@ -1726,6 +1734,47 @@
 
     html += `</section>`;
     return `<div id="Boletin" class="grid-cat" style="display:none; grid-template-columns: 1fr;">${html}</div>`;
+  }
+
+  // ---------- RENDER: BOLETÍN OFICIAL PBA (Provincia de Buenos Aires) ----------
+  // Lee la clave "BoletinProvincia" del JSON que arma el Master Watcher.
+  function generarTabBoletinPBA(bol) {
+    if (!bol) {
+      return `<div id="BoletinPBA" class="grid-cat" style="display:none; grid-template-columns: 1fr;">
+        <div class="vacio" style="text-align:center; padding: 50px 20px; width:100%;">Todavía no hay un Boletín Oficial de la Provincia registrado.</div>
+      </div>`;
+    }
+
+    const titulo = bol.numeroEdicion ? 'Edición Nº ' + bol.numeroEdicion : 'Última edición';
+    const fecha = bol.fechaPublicacion ? ' · ' + bol.fechaPublicacion : '';
+    const nombresSecciones = ['OFICIAL', 'JUDICIAL', 'JURISPRUDENCIA', 'SUPLEMENTO'];
+    const links = nombresSecciones
+      .filter(n => bol.secciones && bol.secciones[n] && bol.secciones[n].url)
+      .map(n => `<a class="boletin-pdf-link" href="${escaparHtml(bol.secciones[n].url)}" target="_blank" rel="noopener">↓ ${escaparHtml(n.charAt(0) + n.slice(1).toLowerCase())}</a>`)
+      .join('');
+
+    let html = `<section class="tarjeta cat-boletin" style="grid-column: 1 / -1; max-width: 780px; margin: 0 auto;">`;
+    html += `<div class="boletin-header">
+      <h2 style="font-family:var(--font-display); font-weight:600; font-size:16px;">Boletín Oficial PBA: ${escaparHtml(titulo)}<span style="color:var(--text-faint); font-weight:400;">${escaparHtml(fecha)}</span></h2>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">${links}</div>
+    </div>`;
+
+    if (bol.items && bol.items.length > 0) {
+      html += `<div style="margin-top:14px;">`;
+      bol.items.forEach(i => {
+        html += `<div class="boletin-entrada">
+          <span class="boletin-chip">${escaparHtml(i.tipo)} Nº ${escaparHtml(i.numero)}</span>
+          ${i.organismo ? `<div class="boletin-organismo">${escaparHtml(i.organismo)}</div>` : ''}
+          <div class="boletin-resumen">${escaparHtml(i.resumen)}</div>
+        </div>`;
+      });
+      html += `</div>`;
+    } else {
+      html += `<p class="vacio" style="margin-top:14px;">No se pudo extraer el resumen automático de la Sección Oficial. Podés abrir los PDF de las secciones con los botones de arriba.</p>`;
+    }
+
+    html += `</section>`;
+    return `<div id="BoletinPBA" class="grid-cat" style="display:none; grid-template-columns: 1fr;">${html}</div>`;
   }
 
   // ---------- RENDER PRINCIPAL ----------
@@ -1770,7 +1819,8 @@
     main.innerHTML =
       generarGridNoticias(estado.Tandil || [], 'Tandil', 'cat-tandil') +
       generarGridNoticias(estado.Nacional || [], 'Nacional', 'cat-nacional') +
-      generarTabBoletin(estado.Boletin);
+      generarTabBoletin(estado.Boletin) +
+      generarTabBoletinPBA(estado.BoletinProvincia);
 
     if (modoSeleccionActivo && seleccionMapa.size > 0) {
       document.querySelectorAll('.item').forEach(item => {
@@ -1832,7 +1882,8 @@
     }
 
     document.querySelectorAll('.tarjeta').forEach(card => {
-      if (card.parentElement.id === 'Boletin' || card.parentElement.id === 'Reclamos') return;
+      const idPadre = card.parentElement.id;
+      if (idPadre === 'Boletin' || idPadre === 'BoletinPBA' || idPadre === 'Reclamos') return;
       const p = card.querySelector('.vacio');
       if (p) p.classList.toggle('oculto', soloNuevasActivo || soloCaidasActivo);
 
