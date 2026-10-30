@@ -4,17 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>
-  // Modo "app": solo cuando la app está instalada (pantalla de inicio / PWA).
-  // En el navegador (compu o celular) se ve siempre la versión web.
-  // Para previsualizar la versión app en el navegador: agregar ?app=1 a la dirección.
+  // Modo "app": celulares/tablets (pantalla angosta, en navegador o con la app instalada).
+  // En compu queda la versión web. Para previsualizarlo en compu: agregar ?app=1 a la dirección.
   (function () {
     var d = document.documentElement;
+    var ang = window.matchMedia('(max-width: 640px)');
     var inst = window.matchMedia('(display-mode: standalone)');
     var tactil = window.matchMedia('(pointer: coarse)');
     var forzar = /[?&]app=1\b/.test(location.search);
-    function f() { d.classList.toggle('modo-app', forzar || (inst.matches && tactil.matches) || window.navigator.standalone === true); }
+    function f() { d.classList.toggle('modo-app', forzar || ang.matches || (inst.matches && tactil.matches) || window.navigator.standalone === true); }
     f();
-    [inst, tactil].forEach(function (m) { if (m.addEventListener) m.addEventListener('change', f); else m.addListener(f); });
+    [ang, inst, tactil].forEach(function (m) { if (m.addEventListener) m.addEventListener('change', f); else m.addListener(f); });
   })();
 </script>
 <title>Panel de noticias · Tandil</title>
@@ -884,19 +884,28 @@
   /* ===== VERSIÓN APP / MÓVIL (html.modo-app) ===== */
   .bottom-nav, .saludo { display: none; }
   html.modo-app body { font-size: 16px; padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
-  html.modo-app header { position: static; border-bottom: none; padding-top: env(safe-area-inset-top, 0px); }
+  html.modo-app header { position: sticky; top: 0; border-bottom: 1px solid var(--border); padding-top: env(safe-area-inset-top, 0px); transition: transform 0.25s ease; }
+  html.modo-app.header-oculto header { transform: translateY(-100%); }
+  @media (prefers-reduced-motion: reduce) { html.modo-app header { transition: none; } }
   html.modo-app .header-inner { padding: 16px 16px 4px 16px; }
   html.modo-app .header-top { flex-wrap: wrap; row-gap: 12px; }
   html.modo-app .brand h1 { font-size: 22px; }
   html.modo-app .brand .pulse-dot { width: 11px; height: 11px; }
   html.modo-app .header-right { width: 100%; justify-content: space-between; gap: 8px; }
-  html.modo-app #btn-reclamos, html.modo-app .tabs { display: none; }
-  html.modo-app .clima-info { padding: 10px 14px; font-size: 14px; }
+  html.modo-app .tabs { display: none; }
+  html.modo-app .clima-info { padding: 10px 12px; font-size: 14px; }
   html.modo-app .fuente-controles { padding: 3px; }
   html.modo-app .fuente-btn { width: 42px; height: 42px; font-size: 16px; }
   html.modo-app .fuente-btn:first-child { font-size: 12px; }
   html.modo-app .theme-toggle { width: 44px; height: 44px; font-size: 18px; }
-  html.modo-app .saludo { display: block; font-family: var(--font-display); font-size: 15px; color: var(--text-muted); margin-top: 2px; }
+  html.modo-app .saludo { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-family: var(--font-display); font-size: 15px; color: var(--text-muted); margin-top: 2px; }
+  .header-modo-btn {
+    min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--bg-sunken); color: var(--text-muted); cursor: pointer;
+    font-family: var(--font-body); font-size: 13px; font-weight: 500; white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .header-modo-btn.activo { border-color: var(--accent-primary); color: var(--accent-primary); background: var(--accent-primary-soft); }
   html.modo-app .status-line { margin: 4px 0 10px 0; }
 
   html.modo-app .buscador { padding: 0 16px; margin-top: 6px; gap: 10px; }
@@ -923,7 +932,7 @@
   html.modo-app .reclamos-titulo { font-size: 16px; }
 
   html.modo-app .bottom-nav {
-    display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 25;
     background: var(--bg-elevated); border-top: 1px solid var(--border);
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
@@ -963,7 +972,7 @@
         <button class="theme-toggle" id="btn-reclamos" type="button" aria-label="Reclamos y trámites" title="Reclamos y trámites">📣</button>
       </div>
     </div>
-    <div class="saludo" id="saludo"></div>
+    <div class="saludo"><span id="saludo-texto"></span><button type="button" class="header-modo-btn" id="btn-header-modo" aria-pressed="true"></button></div>
     <div class="status-line" id="status-line">
       <span>Cargando…</span>
     </div>
@@ -1388,7 +1397,6 @@
   <button type="button" data-cat="Nacional" aria-label="Noticias nacionales"><span class="ico" aria-hidden="true">🌎</span>Nacionales</button>
   <button type="button" data-cat="Boletin" aria-label="Boletín Oficial Tandil"><span class="ico" aria-hidden="true">📜</span>B.O. Tandil</button>
   <button type="button" data-cat="BoletinPBA" aria-label="Boletín Oficial Provincia de Buenos Aires"><span class="ico" aria-hidden="true">🏛️</span>B.O. PBA</button>
-  <button type="button" data-cat="Reclamos" aria-label="Reclamos y trámites"><span class="ico" aria-hidden="true">📣</span>Reclamos</button>
 </nav>
 
 <div class="barra-seleccion" id="barra-seleccion">
@@ -1824,11 +1832,47 @@
   function actualizarSaludo() {
     const h = new Date().getHours();
     const s = h < 6 ? '¡Buenas noches!' : h < 13 ? '¡Buen día!' : h < 20 ? '¡Buenas tardes!' : '¡Buenas noches!';
-    const el = document.getElementById('saludo');
-    if (el) el.textContent = s + ' Esto es lo último de Tandil 👋';
+    const el = document.getElementById('saludo-texto');
+    if (el) el.textContent = s + ' 👋';
   }
   actualizarSaludo();
   setInterval(actualizarSaludo, 10 * 60 * 1000);
+
+  // Encabezado en celular (web o app): fijo, o que se oculte al bajar y reaparezca al subir.
+  let headerModo = 'fijo';
+  try { if (localStorage.getItem('headerModo') === 'oculta') headerModo = 'oculta'; } catch (e) {}
+
+  function aplicarHeaderModo() {
+    const fijo = headerModo === 'fijo';
+    const btn = document.getElementById('btn-header-modo');
+    btn.textContent = fijo ? '📌 Fijo' : '↕ Se oculta';
+    btn.classList.toggle('activo', fijo);
+    btn.setAttribute('aria-pressed', fijo ? 'true' : 'false');
+    btn.setAttribute('aria-label', fijo
+      ? 'Encabezado fijo. Tocá para que se oculte al bajar'
+      : 'El encabezado se oculta al bajar. Tocá para dejarlo fijo');
+    if (fijo) document.documentElement.classList.remove('header-oculto');
+  }
+  document.getElementById('btn-header-modo').addEventListener('click', function () {
+    headerModo = headerModo === 'fijo' ? 'oculta' : 'fijo';
+    try { localStorage.setItem('headerModo', headerModo); } catch (e) {}
+    aplicarHeaderModo();
+  });
+  aplicarHeaderModo();
+
+  let ultimoScrollY = window.scrollY;
+  window.addEventListener('scroll', function () {
+    const raiz = document.documentElement;
+    if (!raiz.classList.contains('modo-app') || headerModo !== 'oculta') {
+      raiz.classList.remove('header-oculto');
+      return;
+    }
+    const y = window.scrollY, dy = y - ultimoScrollY;
+    if (Math.abs(dy) < 8) return;
+    if (dy > 0 && y > 120) raiz.classList.add('header-oculto');
+    else if (dy < 0 || y <= 120) raiz.classList.remove('header-oculto');
+    ultimoScrollY = y;
+  }, { passive: true });
 
   document.getElementById('btn-reclamos').addEventListener('click', function () {
     switchTab('Reclamos');
