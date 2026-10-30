@@ -4,15 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>
-  // Modo "app": celulares/tablets (pantalla angosta o app instalada). En compu queda la versión web.
+  // Modo "app": solo cuando la app está instalada (pantalla de inicio / PWA).
+  // En el navegador (compu o celular) se ve siempre la versión web.
+  // Para previsualizar la versión app en el navegador: agregar ?app=1 a la dirección.
   (function () {
     var d = document.documentElement;
-    var ang = window.matchMedia('(max-width: 640px)');
     var inst = window.matchMedia('(display-mode: standalone)');
     var tactil = window.matchMedia('(pointer: coarse)');
-    function f() { d.classList.toggle('modo-app', ang.matches || (inst.matches && tactil.matches) || window.navigator.standalone === true); }
+    var forzar = /[?&]app=1\b/.test(location.search);
+    function f() { d.classList.toggle('modo-app', forzar || (inst.matches && tactil.matches) || window.navigator.standalone === true); }
     f();
-    [ang, inst, tactil].forEach(function (m) { if (m.addEventListener) m.addEventListener('change', f); else m.addListener(f); });
+    [inst, tactil].forEach(function (m) { if (m.addEventListener) m.addEventListener('change', f); else m.addListener(f); });
   })();
 </script>
 <title>Panel de noticias · Tandil</title>
