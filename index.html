@@ -208,6 +208,17 @@
     font-size: 14px;
     line-height: 1;
   }
+  .clima-ciudad {
+    color: var(--text-muted);
+    font-weight: 500;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-left: 7px;
+    margin-left: 2px;
+    border-left: 1px solid var(--border);
+  }
 
   .fuente-controles {
     display: flex;
@@ -909,6 +920,26 @@
   html.modo-app header { position: sticky; top: 0; border-bottom: 1px solid var(--border); padding-top: env(safe-area-inset-top, 0px); transition: transform 0.25s ease; }
   html.modo-app.header-oculto header { transform: translateY(-100%); }
   @media (prefers-reduced-motion: reduce) { html.modo-app header { transition: none; } }
+
+  /* ===== Frase del día (inspiradora / motivacional) ===== */
+  .frase-dia {
+    display: flex; align-items: baseline; gap: 8px; min-width: 0;
+    margin: 2px 0 6px 0; padding: 2px 0 2px 10px;
+    border-left: 2px solid var(--accent-primary);
+    font-family: var(--font-body); font-size: 13px; line-height: 1.4;
+    color: var(--text-muted); cursor: pointer; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.25s ease;
+  }
+  .frase-dia.cambiando { opacity: 0; }
+  .frase-dia:hover .frase-texto { color: var(--text); }
+  .frase-dia:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; border-radius: 4px; }
+  .frase-texto { font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 0 1 auto; }
+  .frase-autor { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-faint); white-space: nowrap; flex: 0 0 auto; }
+  .frase-autor:not(:empty)::before { content: "— "; }
+  html.modo-app .frase-dia { align-items: flex-start; flex-direction: column; gap: 1px; margin: 4px 0 8px 0; min-height: 44px; justify-content: center; }
+  html.modo-app .frase-texto { white-space: normal; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; font-size: 14px; }
+  @media (prefers-reduced-motion: reduce) { .frase-dia { transition: none; } }
   html.modo-app .header-inner { padding: 16px 16px 4px 16px; }
   html.modo-app .header-top { flex-wrap: wrap; row-gap: 12px; }
   html.modo-app .brand h1 { font-size: 22px; }
@@ -916,6 +947,8 @@
   html.modo-app .header-right { width: 100%; justify-content: space-between; gap: 8px; }
   html.modo-app .tabs { display: none; }
   html.modo-app .clima-info { padding: 10px 12px; font-size: 14px; }
+  html.modo-app .clima-info { min-width: 0; flex: 0 1 auto; }
+  html.modo-app .clima-ciudad { max-width: 96px; font-size: 13px; }
   html.modo-app .fuente-controles { padding: 3px; }
   html.modo-app .fuente-btn { width: 42px; height: 42px; font-size: 16px; }
   html.modo-app .fuente-btn:first-child { font-size: 12px; }
@@ -999,6 +1032,9 @@
       </div>
     </div>
     <div class="saludo"><span id="saludo-texto"></span><button type="button" class="header-modo-btn" id="btn-header-modo" aria-pressed="true"></button></div>
+    <div class="frase-dia" id="frase-dia" role="button" tabindex="0" aria-live="polite" title="Tocá para ver otra frase">
+      <span class="frase-texto" id="frase-texto"></span><span class="frase-autor" id="frase-autor"></span>
+    </div>
     <div class="status-line" id="status-line">
       <span>Cargando…</span>
     </div>
@@ -1769,6 +1805,26 @@
     el.textContent = texto.charAt(0).toUpperCase() + texto.slice(1);
   }
 
+  let climaActual = null;     // último dato de clima recibido
+  let ciudadActual = '';      // ciudad desde donde se lee el panel
+  let ciudadEsDefecto = false;
+
+  function pintarClima() {
+    const el = document.getElementById('clima-info');
+    if (!el || !climaActual) return;
+    const par = TABLA_CLIMA[climaActual.weathercode] || ['—', 'Sin datos'];
+    el.innerHTML = '<span class="icono">' + par[0] + '</span>' + Math.round(climaActual.temperature) + '°C';
+    let titulo = par[1];
+    if (ciudadActual) {
+      const c = document.createElement('span');
+      c.className = 'clima-ciudad';
+      c.textContent = ciudadActual;
+      el.appendChild(c);
+      titulo += ' · ' + ciudadActual + (ciudadEsDefecto ? ' (ubicación por defecto)' : '');
+    }
+    el.title = titulo;
+  }
+
   function cargarClima(lat, lon) {
     ultimasCoordsClima = { lat: lat, lon: lon };
     const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon
@@ -1777,12 +1833,9 @@
     fetch(url)
       .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
       .then(data => {
-        const cw = data.current_weather;
-        const el = document.getElementById('clima-info');
-        if (!cw || !el) return;
-        const par = TABLA_CLIMA[cw.weathercode] || ['—', 'Sin datos'];
-        el.innerHTML = '<span class="icono">' + par[0] + '</span>' + Math.round(cw.temperature) + '°C';
-        el.title = par[1];
+        if (!data.current_weather) return;
+        climaActual = data.current_weather;
+        pintarClima();
       })
       .catch(() => {
         const el = document.getElementById('clima-info');
@@ -1790,15 +1843,48 @@
       });
   }
 
+  // Nombre de la ciudad a partir de las coordenadas (se consulta una sola vez y se recuerda).
+  // Se redondea a 2 decimales (~1 km) antes de consultar, para no enviar la ubicación exacta.
+  function cargarCiudad(lat, lon) {
+    const la = lat.toFixed(2), lo = lon.toFixed(2), clave = la + ',' + lo;
+    try {
+      const c = JSON.parse(localStorage.getItem('panel-ciudad') || 'null');
+      if (c && c.k === clave && c.n) { ciudadActual = c.n; ciudadEsDefecto = false; pintarClima(); return; }
+    } catch (e) {}
+    function fijar(n) {
+      if (!n) throw new Error('sin ciudad');
+      ciudadActual = n; ciudadEsDefecto = false; pintarClima();
+      try { localStorage.setItem('panel-ciudad', JSON.stringify({ k: clave, n: n })); } catch (e) {}
+    }
+    fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + la + '&longitude=' + lo + '&localityLanguage=es')
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(d => fijar(d.city || d.locality || d.principalSubdivision))
+      .catch(() => {
+        return fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&accept-language=es&lat=' + la + '&lon=' + lo)
+          .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(d => { const a = d.address || {}; fijar(a.city || a.town || a.village || a.municipality || a.county || a.state); });
+      })
+      .catch(() => {});   // si ambos fallan, simplemente no se muestra la ciudad
+  }
+
+  function usarUbicacionPorDefecto() {
+    ciudadActual = 'Tandil'; ciudadEsDefecto = true;
+    cargarClima(TANDIL_COORDS.lat, TANDIL_COORDS.lon);
+    pintarClima();
+  }
+
   function inicializarClima() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        function (pos) { cargarClima(pos.coords.latitude, pos.coords.longitude); },
-        function () { cargarClima(TANDIL_COORDS.lat, TANDIL_COORDS.lon); },
+        function (pos) {
+          cargarClima(pos.coords.latitude, pos.coords.longitude);
+          cargarCiudad(pos.coords.latitude, pos.coords.longitude);
+        },
+        usarUbicacionPorDefecto,
         { timeout: 6000 }
       );
     } else {
-      cargarClima(TANDIL_COORDS.lat, TANDIL_COORDS.lon);
+      usarUbicacionPorDefecto();
     }
   }
 
@@ -2313,5 +2399,36 @@
   }
 </script>
 
+
+<script>
+// ===== Frase del día: una frase por día (cambia sola a medianoche); tocar/clic muestra otra =====
+(function () {
+  var FRASES = [["Conocer no es suficiente: hay que aplicar. Querer no es suficiente: hay que hacer.", "Johann Wolfgang von Goethe"], ["Si nada nos salva de la muerte, al menos que el amor nos salve de la vida.", "Pablo Neruda"], ["Fue el tiempo que dedicaste a tu rosa lo que la hizo tan importante.", "Antoine de Saint-Exupéry"], ["No estás deprimido, estás distraído.", "Facundo Cabral"], ["El mejor momento para plantar un árbol fue hace veinte años; el segundo mejor momento es ahora.", "Proverbio chino"], ["Que otros se jacten de las páginas que han escrito; a mí me enorgullecen las que he leído.", "Jorge Luis Borges"], ["Nada te turbe, nada te espante; todo se pasa.", "Santa Teresa de Jesús"], ["Quien conoce a los demás es sabio; quien se conoce a sí mismo es iluminado.", "Lao Tse"], ["No importa lo lento que vayas, siempre y cuando no te detengas.", "Confucio"], ["Todos piensan en cambiar el mundo, pero nadie piensa en cambiarse a sí mismo.", "León Tolstói"], ["El valor no es la ausencia de miedo, sino el triunfo sobre él.", "Nelson Mandela"], ["El futuro pertenece a quienes creen en la belleza de sus sueños.", "Eleanor Roosevelt"], ["Nadie educa a nadie, nadie se educa solo: los hombres se educan entre sí, mediatizados por el mundo.", "Paulo Freire"], ["Caminante, no hay camino, se hace camino al andar.", "Antonio Machado"], ["Mientras aprendemos, enseñamos.", "Séneca"], ["El secreto de la existencia humana no está solo en vivir, sino en saber para qué se vive.", "Fiódor Dostoyevski"], ["Vive como si fueras a morir mañana; aprende como si fueras a vivir siempre.", "Mahatma Gandhi"], ["Cuando llegue la inspiración, que me encuentre trabajando.", "Pablo Picasso"], ["La gota horada la piedra, no por su fuerza, sino por su constancia.", "Ovidio"], ["La esperanza es el sueño del hombre despierto.", "Aristóteles"], ["Una inversión en conocimiento paga el mejor interés.", "Benjamin Franklin"], ["Todo lo que una persona puede imaginar, otras podrán hacerlo realidad.", "Julio Verne"], ["No es porque las cosas sean difíciles que no nos atrevemos; es porque no nos atrevemos que son difíciles.", "Séneca"], ["Caer siete veces, levantarse ocho.", "Proverbio japonés"], ["La mejor manera de predecir el futuro es crearlo.", "Peter Drucker"], ["Hay que perseverar y, sobre todo, tener confianza en uno mismo.", "Marie Curie"], ["Lo bueno, si breve, dos veces bueno.", "Baltasar Gracián"], ["La vida sin examen no merece ser vivida.", "Sócrates"], ["Qué maravilloso es que nadie tenga que esperar un solo momento para empezar a mejorar el mundo.", "Anne Frank"], ["Errar es humano; perdonar, divino.", "Alexander Pope"], ["Si no te gusta algo, cámbialo. Si no puedes cambiarlo, cambia tu actitud.", "Maya Angelou"], ["Pienso, luego existo.", "René Descartes"], ["Un viaje de mil millas comienza con un solo paso.", "Lao Tse"], ["La fuerza no proviene de la capacidad física, sino de una voluntad indomable.", "Mahatma Gandhi"], ["La imaginación es más importante que el conocimiento.", "Albert Einstein"], ["Lo que hacemos es solo una gota en el mar, pero el mar sería menos sin esa gota.", "Madre Teresa de Calcuta"], ["Solos podemos hacer tan poco; juntos podemos hacer mucho.", "Helen Keller"], ["Donde una puerta se cierra, otra se abre.", "Miguel de Cervantes"], ["El obstáculo en el camino se convierte en el camino.", "Marco Aurelio"], ["La vida no es la que uno vivió, sino la que uno recuerda y cómo la recuerda para contarla.", "Gabriel García Márquez"], ["La fortuna favorece a los audaces.", "Virgilio"], ["La única manera de hacer un gran trabajo es amar lo que haces.", "Steve Jobs"], ["Lo urgente no deja tiempo para lo importante.", "Quino"], ["Defender la alegría como una trinchera.", "Mario Benedetti"], ["Aprender sin pensar es inútil; pensar sin aprender, peligroso.", "Confucio"], ["Ningún viento es favorable para quien no sabe adónde va.", "Séneca"], ["Si lloras por haber perdido el sol, las lágrimas no te dejarán ver las estrellas.", "Rabindranath Tagore"], ["Despacito y buena letra: el hacer las cosas bien importa más que el hacerlas.", "Antonio Machado"], ["Mucha gente pequeña, en lugares pequeños, haciendo cosas pequeñas, puede cambiar el mundo.", "Eduardo Galeano"], ["Nadie se baña dos veces en el mismo río.", "Heráclito"], ["El comienzo es la parte más importante del trabajo.", "Platón"], ["Parece siempre imposible hasta que se hace.", "Nelson Mandela"], ["En lo más profundo del invierno, aprendí por fin que había en mí un verano invencible.", "Albert Camus"], ["La verdad adelgaza, pero no quiebra.", "Miguel de Cervantes"], ["Serás lo que debas ser o no serás nada.", "José de San Martín"], ["La vida es como andar en bicicleta: para mantener el equilibrio, hay que seguir avanzando.", "Albert Einstein"], ["Solo sé que no sé nada.", "Sócrates"], ["Si he visto más lejos, es porque estoy sobre los hombros de gigantes.", "Isaac Newton"], ["Quien tiene un porqué para vivir puede soportar casi cualquier cómo.", "Friedrich Nietzsche"], ["Avanza con confianza en la dirección de tus sueños y vive la vida que has imaginado.", "Henry David Thoreau"], ["Si no puedes volar, corre; si no puedes correr, camina; si no puedes caminar, gatea; pero sigue adelante.", "Martin Luther King Jr."], ["La educación es el arma más poderosa que puedes usar para cambiar el mundo.", "Nelson Mandela"], ["Podrán cortar todas las flores, pero no podrán detener la primavera.", "Pablo Neruda"], ["Ser culto es el único modo de ser libre.", "José Martí"], ["Nada grande se ha logrado jamás sin entusiasmo.", "Ralph Waldo Emerson"], ["En la vida no hay nada que temer, solo hay que comprender.", "Marie Curie"], ["No fracasé; descubrí diez mil maneras que no funcionan.", "Thomas Edison"], ["Uno no es lo que es por lo que escribe, sino por lo que ha leído.", "Jorge Luis Borges"], ["La libertad, Sancho, es uno de los más preciosos dones que a los hombres dieron los cielos.", "Miguel de Cervantes"], ["Lo esencial es invisible a los ojos.", "Antoine de Saint-Exupéry"], ["El secreto para salir adelante es comenzar.", "Mark Twain"], ["La educación tiene raíces amargas, pero sus frutos son dulces.", "Aristóteles"], ["El azar favorece solo a la mente preparada.", "Louis Pasteur"], ["Haz lo que puedas, con lo que tengas, donde estés.", "Theodore Roosevelt"], ["El que lee mucho y anda mucho, ve mucho y sabe mucho.", "Miguel de Cervantes"], ["Es de bien nacidos ser agradecidos.", "Miguel de Cervantes"], ["La belleza salvará al mundo.", "Fiódor Dostoyevski"], ["Todos los problemas son problemas de educación.", "Domingo Faustino Sarmiento"], ["Nunca, nunca, nunca te rindas.", "Winston Churchill"], ["No hay atajos hacia ningún lugar que valga la pena.", "Beverly Sills"], ["Si quieres ir rápido, camina solo; si quieres llegar lejos, camina acompañado.", "Proverbio africano"], ["Sé tú mismo; los demás puestos ya están ocupados.", "Oscar Wilde"], ["El éxito es la suma de pequeños esfuerzos repetidos día tras día.", "Robert Collier"], ["Gracias a la vida, que me ha dado tanto.", "Violeta Parra"], ["Andábamos sin buscarnos, pero sabiendo que andábamos para encontrarnos.", "Julio Cortázar"], ["Reunirse es un comienzo; seguir juntos es progresar; trabajar juntos es triunfar.", "Henry Ford"], ["El genio es un uno por ciento de inspiración y un noventa y nueve por ciento de transpiración.", "Thomas Edison"], ["Cuando quieres algo, todo el universo conspira para que puedas realizarlo.", "Paulo Coelho"], ["Lo más difícil es la decisión de actuar; el resto es simplemente tenacidad.", "Amelia Earhart"], ["Lo mejor y más bello del mundo no puede verse ni tocarse: debe sentirse con el corazón.", "Helen Keller"], ["La felicidad de tu vida depende de la calidad de tus pensamientos.", "Marco Aurelio"], ["Quien abre la puerta de una escuela, cierra una prisión.", "Victor Hugo"]];
+  var el = document.getElementById('frase-dia');
+  var tx = document.getElementById('frase-texto');
+  var au = document.getElementById('frase-autor');
+  if (!el || !tx || !au) return;
+  function diaLocal() { var d = new Date(); return Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 86400000); }
+  var base = diaLocal(), offset = 0;
+  function mostrar(animar) {
+    var f = FRASES[((base + offset) % FRASES.length + FRASES.length) % FRASES.length];
+    function poner() {
+      tx.textContent = '“' + f[0] + '”';
+      au.textContent = f[1];
+      el.title = '“' + f[0] + '” — ' + f[1] + '  ·  Tocá para ver otra frase';
+      el.setAttribute('aria-label', 'Frase: ' + f[0] + ' — ' + f[1] + '. Tocá para ver otra.');
+    }
+    if (!animar) { poner(); return; }
+    el.classList.add('cambiando');
+    setTimeout(function () { poner(); el.classList.remove('cambiando'); }, 220);
+  }
+  function siguiente() { offset += 1; mostrar(true); }
+  el.addEventListener('click', siguiente);
+  el.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); siguiente(); } });
+  // Si la pestaña queda abierta varios días, se actualiza al cambiar de día.
+  setInterval(function () { var h = diaLocal(); if (h !== base) { base = h; offset = 0; mostrar(true); } }, 60000);
+  mostrar(false);
+})();
+</script>
 </body>
 </html>
