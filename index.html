@@ -945,6 +945,8 @@
     cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
   .bottom-nav .ico { font-size: 22px; line-height: 1; }
+  .bottom-nav .ico { display: flex; align-items: center; justify-content: center; height: 24px; }
+  .bottom-nav .ico-ar { height: 24px; width: auto; display: block; }
   .bottom-nav button.activo { color: var(--accent-primary); background: var(--accent-primary-soft); font-weight: 600; }
   .bottom-nav button:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: -2px; }
   html.modo-app .barra-seleccion { bottom: calc(70px + env(safe-area-inset-bottom, 0px)); }
@@ -1394,7 +1396,7 @@
 
 <nav class="bottom-nav" id="bottom-nav" aria-label="Secciones">
   <button type="button" data-cat="Tandil" class="activo" aria-label="Noticias de Tandil"><span class="ico" aria-hidden="true">📰</span>Tandil</button>
-  <button type="button" data-cat="Nacional" aria-label="Noticias nacionales"><span class="ico" aria-hidden="true">🌎</span>Nacionales</button>
+  <button type="button" data-cat="Nacional" aria-label="Noticias nacionales"><span class="ico" aria-hidden="true"><svg class="ico-ar" viewBox="0 0 16 33" fill="currentColor" focusable="false"><path d="M5.4 0.1 L6.8 0.0 L8.3 0.3 L10.4 2.0 L12.3 3.3 L11.8 5.3 L13.8 5.4 L14.8 3.7 L15.4 4.3 L15.3 5.2 L14.2 6.2 L13.0 8.1 L11.8 10.5 L11.7 11.9 L11.7 12.6 L12.6 13.3 L12.4 14.3 L13.0 14.9 L12.4 16.0 L11.4 16.6 L10.0 16.9 L8.6 16.8 L8.7 17.3 L8.6 18.5 L8.0 19.0 L6.3 19.1 L6.6 20.0 L7.5 20.6 L6.4 20.8 L6.8 22.0 L5.9 23.0 L4.4 24.0 L5.4 25.0 L5.8 25.9 L4.3 27.0 L3.7 28.3 L3.2 29.6 L3.7 30.3 L2.4 30.0 L0.4 28.5 L0.6 27.0 L0.9 24.6 L1.2 22.0 L1.0 20.0 L1.2 18.0 L1.7 16.0 L2.3 14.0 L2.6 11.5 L2.4 10.0 L2.5 8.5 L3.2 6.4 L3.6 4.8 L3.8 2.5 L4.8 1.0Z M3.5 30.7 L6.2 32.7 L3.5 32.9Z M11.2 29.5 L12.2 29.4 L12.2 30.0 L11.6 30.4 L11.2 30.0Z M9.4 29.3 L10.5 29.3 L10.6 30.0 L10.1 30.4 L9.4 30.0Z"/></svg></span>Nacionales</button>
   <button type="button" data-cat="Boletin" aria-label="Boletín Oficial Tandil"><span class="ico" aria-hidden="true">📜</span>B.O. Tandil</button>
   <button type="button" data-cat="BoletinPBA" aria-label="Boletín Oficial Provincia de Buenos Aires"><span class="ico" aria-hidden="true">🏛️</span>B.O. PBA</button>
 </nav>
