@@ -606,6 +606,28 @@
     transition: opacity 0.15s ease;
   }
   .boletin-pdf-link:hover { opacity: 0.75; }
+  button.boletin-pdf-link { border: none; cursor: pointer; }
+  .boletin-pdf-link.boletin-leer { background: var(--accent-primary); color: #fff; }
+  .boletin-pdf-link.boletin-leer.abierto { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+  .boletin-acciones { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .boletin-acciones-grupo { display: inline-flex; gap: 6px; align-items: center; }
+  .visor-pdf {
+    margin-top: 14px; border: 1px solid var(--border); border-radius: 10px;
+    overflow: hidden; background: var(--bg-elevated);
+  }
+  .visor-pdf-barra {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 8px 10px; border-bottom: 1px solid var(--border);
+    font-family: var(--font-mono); font-size: 12px; color: var(--text-muted);
+  }
+  .visor-pdf-barra .visor-acc { display: inline-flex; gap: 8px; }
+  .visor-pdf-barra a, .visor-pdf-barra button {
+    font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+    color: var(--accent-primary); background: var(--accent-primary-soft);
+    border: none; border-radius: 7px; padding: 6px 11px; cursor: pointer; text-decoration: none;
+  }
+  .visor-pdf iframe { display: block; width: 100%; height: 75vh; min-height: 420px; border: 0; background: #fff; }
+  .visor-pdf-nota { padding: 8px 10px; font-size: 12px; color: var(--text-faint); border-top: 1px solid var(--border); }
 
   .boletin-entrada {
     padding: 11px 0;
@@ -924,6 +946,8 @@
   html.modo-app .compartir-opcion { min-height: 48px; font-size: 15px; }
   html.modo-app .boletin-resumen { font-size: calc(15.5px * var(--escala-fuente)); line-height: 1.55; }
   html.modo-app .boletin-pdf-link { min-height: 44px; display: inline-flex; align-items: center; }
+  html.modo-app .visor-pdf iframe { height: 70vh; min-height: 360px; }
+  html.modo-app .visor-pdf-barra a, html.modo-app .visor-pdf-barra button { min-height: 40px; display: inline-flex; align-items: center; }
 
   html.modo-app .accion-btn { min-height: 44px; padding: 10px 14px; font-size: 14px; }
   html.modo-app .accion-btn-icon { width: 44px; height: 44px; }
@@ -1962,6 +1986,63 @@
     return `<div id="${id}" class="grid-cat ${id === 'Tandil' ? 'active' : ''}">${html}</div>`;
   }
 
+  // ---------- VISOR DE PDF INTEGRADO (leer sin descargar) ----------
+  // Cada boletín muestra dos botones: "Leer" (abre el PDF dentro del panel) y "↓" (descarga/abre
+  // el PDF original, como siempre). El visor usa el reproductor de Google Docs, que funciona
+  // tanto en escritorio como en celulares (donde los iframes con PDF suelen mostrar solo la 1ª página).
+  function botonesPDF(url, titulo, etiqueta) {
+    const u = escaparHtml(url), t = escaparHtml(titulo);
+    return `<span class="boletin-acciones-grupo">
+      <button type="button" class="boletin-pdf-link boletin-leer" data-visor-url="${u}" data-visor-titulo="${t}" aria-expanded="false">👁 Leer ${escaparHtml(etiqueta)}</button>
+      <a class="boletin-pdf-link" href="${u}" target="_blank" rel="noopener" aria-label="Descargar o abrir ${escaparHtml(etiqueta)} en pestaña nueva" title="Descargar / abrir original">↓</a>
+    </span>`;
+  }
+
+  function panelVisorPDF() {
+    return `<div class="visor-pdf oculto" data-visor-panel>
+      <div class="visor-pdf-barra">
+        <span data-visor-titulo-txt></span>
+        <span class="visor-acc">
+          <a data-visor-abrir href="#" target="_blank" rel="noopener">↗ Abrir aparte</a>
+          <button type="button" data-visor-cerrar>✕ Cerrar</button>
+        </span>
+      </div>
+      <iframe title="Visor de PDF" loading="lazy" referrerpolicy="no-referrer" allow="fullscreen"></iframe>
+      <div class="visor-pdf-nota">¿No carga o se ve en blanco? Usá “Abrir aparte” o el botón ↓ para ver el PDF original.</div>
+    </div>`;
+  }
+
+  function cerrarVisorPDF(seccion) {
+    const panel = seccion.querySelector('[data-visor-panel]');
+    if (!panel) return;
+    panel.classList.add('oculto');
+    panel.querySelector('iframe').removeAttribute('src');
+    seccion.querySelectorAll('.boletin-leer').forEach(b => { b.classList.remove('abierto'); b.setAttribute('aria-expanded', 'false'); });
+  }
+
+  document.addEventListener('click', (e) => {
+    const leer = e.target.closest('.boletin-leer');
+    const cerrar = e.target.closest('[data-visor-cerrar]');
+    if (!leer && !cerrar) return;
+    const seccion = (leer || cerrar).closest('.tarjeta');
+    if (!seccion) return;
+    if (cerrar) { cerrarVisorPDF(seccion); return; }
+
+    // Segundo clic sobre el mismo botón = cerrar
+    if (leer.classList.contains('abierto')) { cerrarVisorPDF(seccion); return; }
+
+    const panel = seccion.querySelector('[data-visor-panel]');
+    const url = leer.dataset.visorUrl;
+    seccion.querySelectorAll('.boletin-leer').forEach(b => { b.classList.remove('abierto'); b.setAttribute('aria-expanded', 'false'); });
+    leer.classList.add('abierto');
+    leer.setAttribute('aria-expanded', 'true');
+    panel.querySelector('[data-visor-titulo-txt]').textContent = leer.dataset.visorTitulo || 'PDF';
+    panel.querySelector('[data-visor-abrir]').href = url;
+    panel.querySelector('iframe').src = 'https://docs.google.com/viewer?embedded=true&url=' + encodeURIComponent(url);
+    panel.classList.remove('oculto');
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
   // ---------- RENDER: BOLETÍN OFICIAL TANDIL (SIBOM) ----------
   function generarTabBoletin(bol) {
     if (!bol) {
@@ -1976,8 +2057,9 @@
     let html = `<section class="tarjeta cat-boletin" style="grid-column: 1 / -1; max-width: 780px; margin: 0 auto;">`;
     html += `<div class="boletin-header">
       <h2 style="font-family:var(--font-display); font-weight:600; font-size:16px;">Boletín Oficial Tandil: ${escaparHtml(titulo)}<span style="color:var(--text-faint); font-weight:400;">${escaparHtml(fecha)}</span></h2>
-      <a class="boletin-pdf-link" href="${escaparHtml(bol.url)}" target="_blank" rel="noopener">↓ PDF original (SIBOM)</a>
-    </div>`;
+      <div class="boletin-acciones">${botonesPDF(bol.url, 'Boletín Oficial Tandil' + (bol.numeroEdicion ? ' Nº ' + bol.numeroEdicion : ''), 'PDF original (SIBOM)')}</div>
+    </div>
+    ${panelVisorPDF()}`;
 
     if (bol.items && bol.items.length > 0) {
       html += `<div style="margin-top:14px;">`;
@@ -2010,14 +2092,18 @@
     const nombresSecciones = ['OFICIAL', 'JUDICIAL', 'JURISPRUDENCIA', 'SUPLEMENTO'];
     const links = nombresSecciones
       .filter(n => bol.secciones && bol.secciones[n] && bol.secciones[n].url)
-      .map(n => `<a class="boletin-pdf-link" href="${escaparHtml(bol.secciones[n].url)}" target="_blank" rel="noopener">↓ ${escaparHtml(n.charAt(0) + n.slice(1).toLowerCase())}</a>`)
+      .map(n => {
+        const nom = n.charAt(0) + n.slice(1).toLowerCase();
+        return botonesPDF(bol.secciones[n].url, 'B.O. PBA · ' + nom, nom);
+      })
       .join('');
 
     let html = `<section class="tarjeta cat-boletin" style="grid-column: 1 / -1; max-width: 780px; margin: 0 auto;">`;
     html += `<div class="boletin-header">
       <h2 style="font-family:var(--font-display); font-weight:600; font-size:16px;">Boletín Oficial PBA: ${escaparHtml(titulo)}<span style="color:var(--text-faint); font-weight:400;">${escaparHtml(fecha)}</span></h2>
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">${links}</div>
-    </div>`;
+      <div class="boletin-acciones">${links}</div>
+    </div>
+    ${panelVisorPDF()}`;
 
     if (bol.items && bol.items.length > 0) {
       html += `<div style="margin-top:14px;">`;
