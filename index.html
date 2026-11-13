@@ -481,7 +481,7 @@
   }
   .item-link:hover { color: var(--accent-primary); }
 
-  /* ===== MINIATURAS DE NOTICIAS ===== */
+  /* ===== MINIATURAS DE NOTICIAS (a la izquierda del titular) ===== */
   .item-texto { flex: 1; min-width: 0; }
   .item-thumb {
     flex-shrink: 0;
@@ -491,7 +491,6 @@
     border-radius: 8px;
     background: var(--bg-sunken);
     border: 1px solid var(--border);
-    margin-left: auto;
   }
 
   .item-check {
@@ -2072,6 +2071,20 @@
       + ' <span class="dim">·</span> ' + ultimoConteoFuentes + ' fuentes monitoreadas';
   }
 
+  // ---------- MINIATURAS: respaldo si el sitio bloquea la imagen ----------
+  // 1) Si la imagen original falla, se reintenta una vez a través de un proxy de imágenes
+  //    (images.weserv.nl), que sirve para sitios que bloquean el uso de sus fotos en otras webs.
+  // 2) Si también falla, se quita la miniatura y queda solo el titular.
+  // Para desactivar el proxy: reemplazá en el <img> de abajo onerror="imgFallback(this)" por onerror="this.remove()".
+  function imgFallback(img) {
+    if (!img.dataset.proxy && img.dataset.orig) {
+      img.dataset.proxy = '1';
+      img.src = 'https://images.weserv.nl/?w=184&h=136&fit=cover&url=' + encodeURIComponent(img.dataset.orig);
+    } else {
+      img.remove();
+    }
+  }
+
   // ---------- RENDER: GRID DE NOTICIAS ----------
   function generarGridNoticias(secciones, id, claseCat) {
     const html = secciones.map(sec => {
@@ -2081,13 +2094,15 @@
           : '<span class="placeholder-dot" style="width:6px;flex-shrink:0;"></span>';
         const tituloEscapado = escaparHtml(i.title);
         const linkEscapado = escaparHtml(i.link);
-        // Miniatura: si el sitio no trae imagen (o falla al cargar), simplemente no se muestra
-        const imgUrl = (i.img || '').replace(/^http:\/\//i, 'https://');
+        // Miniatura (a la izquierda del titular): si el sitio no trae imagen o falla al cargar,
+        // se reintenta por proxy y, si tampoco anda, simplemente no se muestra.
+        const imgOrig = i.img || '';
+        const imgUrl = imgOrig.replace(/^http:\/\//i, 'https://');
         const miniatura = imgUrl
-          ? `<img class="item-thumb" src="${escaparHtml(imgUrl)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">`
+          ? `<img class="item-thumb" src="${escaparHtml(imgUrl)}" data-orig="${escaparHtml(imgOrig)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="imgFallback(this)">`
           : '';
         return `<div class="item" data-texto="${tituloEscapado.toLowerCase()}" data-nueva="${i.esNueva ? '1' : '0'}" data-link="${linkEscapado}" data-titulo="${tituloEscapado}">
-          <a class="item-link" href="${linkEscapado}" target="_blank" rel="noopener"><span class="item-check" aria-hidden="true"></span>${puntoNuevo}<span class="item-texto">${tituloEscapado}</span>${miniatura}</a>
+          <a class="item-link" href="${linkEscapado}" target="_blank" rel="noopener"><span class="item-check" aria-hidden="true"></span>${puntoNuevo}${miniatura}<span class="item-texto">${tituloEscapado}</span></a>
           <button class="copiar-btn" type="button" data-link="${linkEscapado}" aria-label="Copiar link" title="Copiar link">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
           </button>
