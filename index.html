@@ -481,6 +481,19 @@
   }
   .item-link:hover { color: var(--accent-primary); }
 
+  /* ===== MINIATURAS DE NOTICIAS ===== */
+  .item-texto { flex: 1; min-width: 0; }
+  .item-thumb {
+    flex-shrink: 0;
+    width: 76px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--border);
+    margin-left: auto;
+  }
+
   .item-check {
     display: none;
     flex-shrink: 0;
@@ -975,6 +988,7 @@
   html.modo-app .tarjeta-header h2 { font-size: 17px; }
   html.modo-app .item { min-height: 56px; }
   html.modo-app .item-link { font-size: calc(16.5px * var(--escala-fuente)); line-height: 1.42; }
+  html.modo-app .item-thumb { width: 92px; height: 68px; border-radius: 10px; }
   html.modo-app .copiar-btn, html.modo-app .compartir-btn { width: 44px; height: 44px; }
   html.modo-app .compartir-opcion { min-height: 48px; font-size: 15px; }
   html.modo-app .boletin-resumen { font-size: calc(15.5px * var(--escala-fuente)); line-height: 1.55; }
@@ -2067,8 +2081,13 @@
           : '<span class="placeholder-dot" style="width:6px;flex-shrink:0;"></span>';
         const tituloEscapado = escaparHtml(i.title);
         const linkEscapado = escaparHtml(i.link);
+        // Miniatura: si el sitio no trae imagen (o falla al cargar), simplemente no se muestra
+        const imgUrl = (i.img || '').replace(/^http:\/\//i, 'https://');
+        const miniatura = imgUrl
+          ? `<img class="item-thumb" src="${escaparHtml(imgUrl)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">`
+          : '';
         return `<div class="item" data-texto="${tituloEscapado.toLowerCase()}" data-nueva="${i.esNueva ? '1' : '0'}" data-link="${linkEscapado}" data-titulo="${tituloEscapado}">
-          <a class="item-link" href="${linkEscapado}" target="_blank" rel="noopener"><span class="item-check" aria-hidden="true"></span>${puntoNuevo}<span>${tituloEscapado}</span></a>
+          <a class="item-link" href="${linkEscapado}" target="_blank" rel="noopener"><span class="item-check" aria-hidden="true"></span>${puntoNuevo}<span class="item-texto">${tituloEscapado}</span>${miniatura}</a>
           <button class="copiar-btn" type="button" data-link="${linkEscapado}" aria-label="Copiar link" title="Copiar link">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
           </button>
