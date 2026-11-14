@@ -1020,6 +1020,98 @@
   .bottom-nav button.activo { color: var(--accent-primary); background: var(--accent-primary-soft); font-weight: 600; }
   .bottom-nav button:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: -2px; }
   html.modo-app .barra-seleccion { bottom: calc(70px + env(safe-area-inset-bottom, 0px)); }
+
+  /* ===== MENÚ "MEDIOS": elegir qué tarjetas se muestran (Tandil / Nacionales) ===== */
+  #btn-medios[hidden] { display: none; }
+  .filtro-toggle.medios svg { flex-shrink: 0; }
+  .filtro-toggle.medios .medios-cant {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--accent-primary);
+    color: #fff;
+  }
+  .filtro-toggle.medios .medios-cant:empty { display: none; }
+  .filtro-toggle.medios.activo,
+  .filtro-toggle.medios[aria-expanded="true"] {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    background: var(--accent-primary-soft);
+  }
+  .medios-fondo { position: fixed; inset: 0; z-index: 59; background: transparent; }
+  .medios-fondo[hidden], .medios-panel[hidden] { display: none; }
+  .medios-panel {
+    position: fixed;
+    z-index: 60;
+    width: 340px;
+    max-width: calc(100vw - 20px);
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 12px 40px rgba(20, 22, 28, 0.22);
+    overflow: hidden;
+  }
+  .medios-cab {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 12px 14px 8px 16px;
+  }
+  .medios-titulo { font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--text); margin: 0; }
+  .medios-cerrar {
+    width: 32px; height: 32px; border-radius: 8px; border: 0; background: transparent;
+    color: var(--text-muted); font-size: 16px; cursor: pointer;
+  }
+  .medios-cerrar:hover { background: var(--bg-sunken); color: var(--text); }
+  .medios-resumen { padding: 0 16px 8px; font-size: 12px; color: var(--text-faint); }
+  .medios-acciones { display: flex; gap: 8px; padding: 0 16px 10px; }
+  .medios-acciones button {
+    padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--bg-sunken); color: var(--text-muted);
+    font-family: var(--font-body); font-size: 12.5px; font-weight: 500; cursor: pointer;
+  }
+  .medios-acciones button:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+  .medios-lista {
+    overflow-y: auto; overscroll-behavior: contain;
+    max-height: min(52vh, 420px);
+    border-top: 1px solid var(--border);
+    padding: 6px 8px 8px;
+  }
+  .medio-fila {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 8px; border-radius: 8px; cursor: pointer;
+    font-size: calc(14px * var(--escala-fuente)); color: var(--text);
+  }
+  .medio-fila:hover { background: var(--bg-sunken); }
+  .medio-fila input { width: 17px; height: 17px; margin: 0; flex-shrink: 0; accent-color: var(--accent-primary); cursor: pointer; }
+  .medio-nombre { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .medio-fila input:not(:checked) ~ .medio-nombre { color: var(--text-faint); text-decoration: line-through; }
+  .medio-cont { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-faint); }
+  .tarjeta.medio-off { display: none !important; }
+  .medios-vacio {
+    grid-column: 1 / -1; text-align: center; padding: 44px 20px;
+    color: var(--text-muted); font-size: 14px;
+  }
+  .medios-vacio button {
+    margin-top: 12px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--accent-primary);
+    background: var(--accent-primary-soft); color: var(--accent-primary);
+    font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  /* Celular / tablet (modo app): el menú sube desde abajo, con zonas táctiles grandes */
+  html.modo-app .medios-fondo { background: rgba(10, 12, 18, 0.45); }
+  html.modo-app .medios-panel {
+    left: 0 !important; right: 0 !important; top: auto !important; bottom: 0;
+    width: auto; max-width: none;
+    border-radius: 18px 18px 0 0; border-bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    max-height: 82vh;
+  }
+  html.modo-app .medios-lista { max-height: 52vh; }
+  html.modo-app .medio-fila { min-height: 48px; padding: 10px 10px; font-size: calc(16px * var(--escala-fuente)); }
+  html.modo-app .medio-fila input { width: 22px; height: 22px; }
+  html.modo-app .medios-cerrar { width: 40px; height: 40px; font-size: 18px; }
+  html.modo-app .medios-acciones button { padding: 9px 16px; font-size: 14px; }
 </style>
 </head>
 <body>
@@ -1066,6 +1158,10 @@
     <input id="buscador-input" type="text" placeholder="Buscar título o medio…" disabled>
   </div>
   <div class="filtros-chips">
+  <button class="filtro-toggle medios" id="btn-medios" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="panel-medios" title="Elegir qué medios se muestran">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line><circle cx="9" cy="6" r="2.2" fill="var(--bg-sunken)"></circle><circle cx="15" cy="12" r="2.2" fill="var(--bg-sunken)"></circle><circle cx="8" cy="18" r="2.2" fill="var(--bg-sunken)"></circle></svg>
+    Medios <span class="medios-cant" id="medios-cant"></span>
+  </button>
   <button class="filtro-toggle nuevas" id="filtro-nuevas" type="button" aria-pressed="false">
     <span class="dot-filtro" aria-hidden="true"></span> Solo nuevas
   </button>
@@ -1495,6 +1591,20 @@
     </div>
 
   </section>
+</div>
+
+<div class="medios-fondo" id="medios-fondo" hidden></div>
+<div class="medios-panel" id="panel-medios" role="dialog" aria-modal="false" aria-labelledby="medios-titulo" hidden>
+  <div class="medios-cab">
+    <h2 class="medios-titulo" id="medios-titulo">Medios</h2>
+    <button type="button" class="medios-cerrar" id="medios-cerrar" aria-label="Cerrar">✕</button>
+  </div>
+  <div class="medios-resumen" id="medios-resumen"></div>
+  <div class="medios-acciones">
+    <button type="button" id="medios-todos">Mostrar todos</button>
+    <button type="button" id="medios-ninguno">Ocultar todos</button>
+  </div>
+  <div class="medios-lista" id="medios-lista"></div>
 </div>
 
 <nav class="bottom-nav" id="bottom-nav" aria-label="Secciones">
@@ -1935,6 +2045,7 @@
   let categoriaActiva = 'Tandil';
 
   function switchTab(cat) {
+    if (cat !== categoriaActiva && typeof cerrarPanelMedios === 'function') cerrarPanelMedios(false);
     categoriaActiva = cat;
 
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -1972,6 +2083,7 @@
       b.classList.toggle('activo', act);
       if (act) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
     });
+    if (typeof actualizarBotonMedios === 'function') actualizarBotonMedios();
     aplicarFiltros();
   }
 
@@ -2318,6 +2430,10 @@
       generarTabBoletin(estado.Boletin) +
       generarTabBoletinPBA(estado.BoletinProvincia);
 
+    // Aplica la selección de medios elegida por el usuario (y refresca el menú si está abierto)
+    aplicarMediosVisibles();
+    if (panelMediosAbierto()) construirPanelMedios();
+
     if (modoSeleccionActivo && seleccionMapa.size > 0) {
       document.querySelectorAll('.item').forEach(item => {
         if (seleccionMapa.has(item.dataset.link)) item.classList.add('seleccionado');
@@ -2441,6 +2557,162 @@
       .then(estado => renderizarPanel(estado))
       .catch(err => mostrarError(err.message));
   }
+
+  // ---------- MEDIOS VISIBLES (secciones Tandil y Nacionales) ----------
+  // El usuario elige qué tarjetas de medios ver. Se guardan los medios OCULTOS (por sección) en
+  // localStorage, así un medio nuevo que se agregue al panel aparece solo, sin tener que tildarlo.
+  const MEDIOS_KEY = 'panel-medios-ocultos';
+  const mediosOcultos = { Tandil: [], Nacional: [] };
+  try {
+    const guardadoMedios = JSON.parse(localStorage.getItem(MEDIOS_KEY) || 'null');
+    if (guardadoMedios && typeof guardadoMedios === 'object') {
+      ['Tandil', 'Nacional'].forEach(function (k) {
+        if (Array.isArray(guardadoMedios[k])) mediosOcultos[k] = guardadoMedios[k].filter(function (x) { return typeof x === 'string'; });
+      });
+    }
+  } catch (e) {}
+
+  function guardarMedios() {
+    try { localStorage.setItem(MEDIOS_KEY, JSON.stringify(mediosOcultos)); } catch (e) {}
+  }
+  function esCategoriaConMedios(cat) { return cat === 'Tandil' || cat === 'Nacional'; }
+  function tarjetasDeCategoria(cat) { return Array.from(document.querySelectorAll('#' + cat + ' > .tarjeta')); }
+
+  // Oculta / muestra las tarjetas según la selección y arma el aviso si no queda ninguna.
+  function aplicarMediosVisibles() {
+    ['Tandil', 'Nacional'].forEach(function (cat) {
+      const grid = document.getElementById(cat);
+      if (!grid) return;
+      const ocultos = new Set(mediosOcultos[cat]);
+      const tarjetas = tarjetasDeCategoria(cat);
+      let visibles = 0;
+      tarjetas.forEach(function (c) {
+        const off = ocultos.has(c.dataset.sitio);
+        c.classList.toggle('medio-off', off);
+        if (!off) visibles++;
+      });
+      let aviso = grid.querySelector(':scope > .medios-vacio');
+      if (tarjetas.length > 0 && visibles === 0) {
+        if (!aviso) {
+          aviso = document.createElement('div');
+          aviso.className = 'medios-vacio';
+          aviso.innerHTML = 'Ocultaste todos los medios de esta sección.<br><button type="button" data-medios-todos>Mostrar todos</button>';
+          grid.appendChild(aviso);
+        }
+      } else if (aviso) {
+        aviso.remove();
+      }
+    });
+    actualizarBotonMedios();
+  }
+
+  function actualizarBotonMedios() {
+    const btn = document.getElementById('btn-medios');
+    if (!btn) return;
+    if (!esCategoriaConMedios(categoriaActiva)) { btn.hidden = true; return; }
+    btn.hidden = false;
+    const tarjetas = tarjetasDeCategoria(categoriaActiva);
+    const ocultas = tarjetas.filter(function (c) { return c.classList.contains('medio-off'); }).length;
+    const cant = document.getElementById('medios-cant');
+    if (cant) cant.textContent = ocultas > 0 ? (tarjetas.length - ocultas) + '/' + tarjetas.length : '';
+    btn.classList.toggle('activo', ocultas > 0);
+    btn.title = ocultas > 0 ? ocultas + (ocultas === 1 ? ' medio oculto' : ' medios ocultos') + ' · elegir medios' : 'Elegir qué medios se muestran';
+  }
+
+  // ----- Panel / menú -----
+  function panelMediosAbierto() { return !document.getElementById('panel-medios').hidden; }
+
+  function construirPanelMedios() {
+    const cat = categoriaActiva;
+    const tarjetas = tarjetasDeCategoria(cat);
+    const ocultos = new Set(mediosOcultos[cat]);
+    document.getElementById('medios-titulo').textContent = cat === 'Tandil' ? 'Medios de Tandil' : 'Medios nacionales';
+    document.getElementById('medios-lista').innerHTML = tarjetas.map(function (c) {
+      const nombre = (c.querySelector('h2') || {}).textContent || c.dataset.sitio;
+      const cont = (c.querySelector('.contador') || {}).textContent || '';
+      return '<label class="medio-fila"><input type="checkbox" data-sitio="' + escaparHtml(c.dataset.sitio) + '"'
+        + (ocultos.has(c.dataset.sitio) ? '' : ' checked') + '>'
+        + '<span class="medio-nombre">' + escaparHtml(nombre) + '</span>'
+        + '<span class="medio-cont" title="Titulares">' + escaparHtml(cont) + '</span></label>';
+    }).join('');
+    actualizarResumenMedios();
+  }
+
+  function actualizarResumenMedios() {
+    const checks = document.querySelectorAll('#medios-lista input[type="checkbox"]');
+    const marcados = Array.from(checks).filter(function (i) { return i.checked; }).length;
+    document.getElementById('medios-resumen').textContent = marcados + ' de ' + checks.length + ' medios visibles';
+  }
+
+  function posicionarPanelMedios() {
+    const p = document.getElementById('panel-medios');
+    const b = document.getElementById('btn-medios');
+    if (document.documentElement.classList.contains('modo-app')) { p.style.left = ''; p.style.top = ''; return; }
+    const r = b.getBoundingClientRect();
+    const ancho = p.offsetWidth;
+    p.style.left = Math.max(10, Math.min(r.left, window.innerWidth - ancho - 10)) + 'px';
+    p.style.top = (r.bottom + 8) + 'px';
+    p.style.maxHeight = Math.max(220, window.innerHeight - r.bottom - 24) + 'px';
+  }
+
+  function abrirPanelMedios() {
+    if (!esCategoriaConMedios(categoriaActiva)) return;
+    construirPanelMedios();
+    document.getElementById('medios-fondo').hidden = false;
+    document.getElementById('panel-medios').hidden = false;
+    document.getElementById('btn-medios').setAttribute('aria-expanded', 'true');
+    posicionarPanelMedios();
+    const primero = document.querySelector('#medios-lista input');
+    if (primero) primero.focus({ preventScroll: true });
+  }
+
+  function cerrarPanelMedios(devolverFoco) {
+    if (!panelMediosAbierto()) return;
+    document.getElementById('medios-fondo').hidden = true;
+    document.getElementById('panel-medios').hidden = true;
+    const b = document.getElementById('btn-medios');
+    b.setAttribute('aria-expanded', 'false');
+    if (devolverFoco) b.focus({ preventScroll: true });
+  }
+
+  function cambiarMedio(cat, sitio, visible) {
+    const set = new Set(mediosOcultos[cat]);
+    if (visible) set.delete(sitio); else set.add(sitio);
+    mediosOcultos[cat] = Array.from(set);
+  }
+
+  function marcarTodosMedios(visible) {
+    const cat = categoriaActiva;
+    tarjetasDeCategoria(cat).forEach(function (c) { cambiarMedio(cat, c.dataset.sitio, visible); });
+    guardarMedios();
+    aplicarMediosVisibles();
+    if (panelMediosAbierto()) construirPanelMedios();
+  }
+
+  document.getElementById('btn-medios').addEventListener('click', function () {
+    if (panelMediosAbierto()) cerrarPanelMedios(false); else abrirPanelMedios();
+  });
+  document.getElementById('medios-cerrar').addEventListener('click', function () { cerrarPanelMedios(true); });
+  document.getElementById('medios-fondo').addEventListener('click', function () { cerrarPanelMedios(false); });
+  document.getElementById('medios-todos').addEventListener('click', function () { marcarTodosMedios(true); });
+  document.getElementById('medios-ninguno').addEventListener('click', function () { marcarTodosMedios(false); });
+  document.getElementById('medios-lista').addEventListener('change', function (e) {
+    const input = e.target.closest('input[type="checkbox"]');
+    if (!input) return;
+    cambiarMedio(categoriaActiva, input.dataset.sitio, input.checked);
+    guardarMedios();
+    aplicarMediosVisibles();
+    actualizarResumenMedios();
+  });
+  // Botón "Mostrar todos" del aviso que aparece cuando no queda ningún medio visible
+  document.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('[data-medios-todos]')) marcarTodosMedios(true);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && panelMediosAbierto()) cerrarPanelMedios(true);
+  });
+  window.addEventListener('resize', function () { if (panelMediosAbierto()) posicionarPanelMedios(); });
+  window.addEventListener('scroll', function () { if (panelMediosAbierto()) posicionarPanelMedios(); }, { passive: true });
 
   inicializarTema();
   inicializarEscalaFuente();
