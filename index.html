@@ -1112,6 +1112,44 @@
   html.modo-app .medio-fila input { width: 22px; height: 22px; }
   html.modo-app .medios-cerrar { width: 40px; height: 40px; font-size: 18px; }
   html.modo-app .medios-acciones button { padding: 9px 16px; font-size: 14px; }
+
+  /* ===== CINTA DE TITULARES ===== */
+  .cinta { display: none; border-top: 1px solid var(--border); background: var(--bg-sunken); }
+  .cinta.activa { display: flex; align-items: stretch; }
+  .cinta-etiqueta {
+    flex: 0 0 auto; display: flex; align-items: center; padding: 0 12px;
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+    letter-spacing: 0.04em; text-transform: uppercase; color: #fff;
+  }
+  .cinta.origen-tandil .cinta-etiqueta { background: var(--accent-tandil); }
+  .cinta.origen-nacional .cinta-etiqueta { background: var(--accent-nacional); }
+  .cinta-ventana { flex: 1; min-width: 0; overflow: hidden; }
+  .cinta-pista {
+    display: inline-flex; white-space: nowrap;
+    animation: cinta-mover var(--cinta-dur, 120s) linear infinite;
+    will-change: transform;
+  }
+  .cinta-grupo { display: inline-flex; }
+  .cinta:hover .cinta-pista,
+  .cinta:focus-within .cinta-pista,
+  .cinta.pausada .cinta-pista { animation-play-state: paused; }
+  .cinta-item {
+    display: inline-flex; align-items: center; gap: 8px; padding: 9px 0;
+    font-size: calc(13px * var(--escala-fuente));
+    color: var(--text); text-decoration: none;
+  }
+  .cinta-item:hover { color: var(--accent-primary); }
+  .cinta-item::after { content: '•'; margin: 0 24px; color: var(--text-faint); }
+  .cinta-medio { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); }
+  .cinta.origen-tandil .cinta-medio { color: var(--accent-tandil); }
+  .cinta.origen-nacional .cinta-medio { color: var(--accent-nacional); }
+  @keyframes cinta-mover { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) {
+    .cinta-pista { animation: none; }
+    .cinta-ventana { overflow-x: auto; }
+  }
+  html.modo-app .cinta-item { font-size: calc(14px * var(--escala-fuente)); padding: 11px 0; }
+  html.modo-app .cinta-etiqueta { font-size: 10.5px; padding: 0 10px; }
 </style>
 </head>
 <body>
@@ -1149,6 +1187,10 @@
       <div class="tab" data-cat="Boletin" onclick="switchTab('Boletin')" role="tab">Boletín Oficial Tandil</div>
       <div class="tab" data-cat="BoletinPBA" onclick="switchTab('BoletinPBA')" role="tab">Boletín Oficial PBA</div>
     </div>
+  </div>
+  <div class="cinta" id="cinta" role="region" aria-label="Titulares de otros medios">
+    <span class="cinta-etiqueta" id="cinta-etiqueta"></span>
+    <div class="cinta-ventana" id="cinta-ventana"><div class="cinta-pista" id="cinta-pista"></div></div>
   </div>
 </header>
 
@@ -2084,6 +2126,7 @@
       if (act) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
     });
     if (typeof actualizarBotonMedios === 'function') actualizarBotonMedios();
+    actualizarCinta();
     aplicarFiltros();
   }
 
@@ -2412,6 +2455,7 @@
       return;
     }
     ultimoEstadoJSON = estadoJSON;
+    datosCinta = estado; cintaVersion++;
 
     // Guardamos la posición de scroll y qué desplegables de "caídas" estaban
     // abiertos, para restaurarlos después de repintar y no desorientar a
@@ -2713,6 +2757,85 @@
   });
   window.addEventListener('resize', function () { if (panelMediosAbierto()) posicionarPanelMedios(); });
   window.addEventListener('scroll', function () { if (panelMediosAbierto()) posicionarPanelMedios(); }, { passive: true });
+
+  // ---------- CINTA DE TITULARES ----------
+  // Pestaña actual -> de qué sección se muestran titulares en la cinta
+  const CINTA_ORIGEN = { Tandil: 'Nacional', Nacional: 'Tandil', Boletin: 'Tandil', BoletinPBA: 'Nacional' };
+  const CINTA_POR_MEDIO = 3;   // titulares por medio
+  const CINTA_MAX = 40;        // tope total de titulares en la cinta
+  const CINTA_PX_SEG = 55;     // velocidad (píxeles por segundo)
+  let datosCinta = null;
+  let cintaVersion = 0;
+  let cintaClaveActual = '';
+
+  function htmlGrupoCinta(items, duplicado) {
+    return '<span class="cinta-grupo"' + (duplicado ? ' aria-hidden="true"' : '') + '>'
+      + items.map(function (it) {
+          return '<a class="cinta-item" href="' + escaparHtml(it.link) + '" target="_blank" rel="noopener"'
+            + (duplicado ? ' tabindex="-1"' : '') + '>'
+            + '<span class="cinta-medio">' + escaparHtml(it.medio) + '</span>'
+            + escaparHtml(it.title) + '</a>';
+        }).join('')
+      + '</span>';
+  }
+
+  function actualizarCinta() {
+    const cinta = document.getElementById('cinta');
+    if (!cinta) return;
+    const origen = CINTA_ORIGEN[categoriaActiva];
+    if (!origen || !datosCinta || !Array.isArray(datosCinta[origen])) {
+      cinta.classList.remove('activa');
+      cintaClaveActual = '';
+      return;
+    }
+
+    // No reconstruir (y reiniciar la animación) si nada cambió
+    const clave = origen + '|' + cintaVersion + '|' + JSON.stringify(mediosOcultos[origen] || []);
+    if (clave === cintaClaveActual && cinta.classList.contains('activa')) return;
+
+    // Respeta el menú "Medios" de la sección de origen
+    const ocultos = new Set(mediosOcultos[origen] || []);
+    const secciones = datosCinta[origen].filter(function (s) {
+      return !ocultos.has(String(s.nombre).toLowerCase()) && s.actuales && s.actuales.length;
+    });
+
+    // Intercala los medios (1º de cada uno, después 2º de cada uno...) para que no se junten
+    const items = [];
+    for (let i = 0; i < CINTA_POR_MEDIO && items.length < CINTA_MAX; i++) {
+      secciones.forEach(function (s) {
+        const n = s.actuales[i];
+        if (n && n.title && n.link && items.length < CINTA_MAX) {
+          items.push({ medio: s.nombre, title: n.title, link: n.link });
+        }
+      });
+    }
+
+    if (!items.length) {
+      cinta.classList.remove('activa');
+      cintaClaveActual = '';
+      return;
+    }
+
+    cinta.className = 'cinta activa origen-' + origen.toLowerCase();
+    document.getElementById('cinta-etiqueta').textContent = origen === 'Tandil' ? 'Tandil' : 'Nacional';
+    const pista = document.getElementById('cinta-pista');
+    // El contenido va duplicado para que el bucle sea continuo (la animación recorre el 50%)
+    pista.innerHTML = htmlGrupoCinta(items, false) + htmlGrupoCinta(items, true);
+    const ancho = pista.scrollWidth / 2;
+    pista.style.setProperty('--cinta-dur', Math.max(40, ancho / CINTA_PX_SEG).toFixed(1) + 's');
+    cintaClaveActual = clave;
+  }
+
+  // En celular: tocar la cinta la pausa un momento
+  (function () {
+    const cinta = document.getElementById('cinta');
+    if (!cinta) return;
+    let t = null;
+    cinta.addEventListener('touchstart', function () { clearTimeout(t); cinta.classList.add('pausada'); }, { passive: true });
+    ['touchend', 'touchcancel'].forEach(function (ev) {
+      cinta.addEventListener(ev, function () { clearTimeout(t); t = setTimeout(function () { cinta.classList.remove('pausada'); }, 2000); }, { passive: true });
+    });
+  })();
 
   inicializarTema();
   inicializarEscalaFuente();
