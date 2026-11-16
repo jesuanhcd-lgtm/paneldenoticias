@@ -923,7 +923,13 @@
   }
   /* ===== BOLETINES: buscador sobre el resumen ===== */
   .filtros-chips { display: contents; }
-  .buscador.en-boletin .filtro-toggle { display: none; }
+  .buscador.en-boletin .filtro-toggle:not(.cinta) { display: none; }
+  .filtro-toggle.cinta.activo {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    background: var(--accent-primary-soft);
+  }
+  .filtro-toggle.cinta.activo .dot-filtro { background: var(--live-dot); }
   .buscador.en-reclamos { display: none; }
 
   /* ===== VERSIÓN APP / MÓVIL (html.modo-app) ===== */
@@ -1212,6 +1218,9 @@
   </button>
   <button class="filtro-toggle seleccion" id="toggle-seleccion" type="button" aria-pressed="false">
     <span class="dot-filtro" aria-hidden="true"></span> Seleccionar
+  </button>
+  <button class="filtro-toggle cinta activo" id="btn-cinta" type="button" aria-pressed="true" title="Mostrar u ocultar la cinta de titulares">
+    <span class="dot-filtro" aria-hidden="true"></span> Cinta
   </button>
   </div>
 </div>
@@ -2764,6 +2773,8 @@
   const CINTA_POR_MEDIO = 3;   // titulares por medio
   const CINTA_MAX = 40;        // tope total de titulares en la cinta
   const CINTA_PX_SEG = 55;     // velocidad (píxeles por segundo)
+  let cintaActiva = true;
+  try { if (localStorage.getItem('panel-cinta') === 'off') cintaActiva = false; } catch (e) {}
   let datosCinta = null;
   let cintaVersion = 0;
   let cintaClaveActual = '';
@@ -2782,6 +2793,7 @@
   function actualizarCinta() {
     const cinta = document.getElementById('cinta');
     if (!cinta) return;
+    if (!cintaActiva) { cinta.classList.remove('activa'); cintaClaveActual = ''; return; }
     const origen = CINTA_ORIGEN[categoriaActiva];
     if (!origen || !datosCinta || !Array.isArray(datosCinta[origen])) {
       cinta.classList.remove('activa');
@@ -2834,6 +2846,23 @@
     cinta.addEventListener('touchstart', function () { clearTimeout(t); cinta.classList.add('pausada'); }, { passive: true });
     ['touchend', 'touchcancel'].forEach(function (ev) {
       cinta.addEventListener(ev, function () { clearTimeout(t); t = setTimeout(function () { cinta.classList.remove('pausada'); }, 2000); }, { passive: true });
+    });
+  })();
+
+  // Botón para activar / desactivar la cinta (se recuerda en este dispositivo)
+  (function () {
+    const btn = document.getElementById('btn-cinta');
+    if (!btn) return;
+    function pintar() {
+      btn.classList.toggle('activo', cintaActiva);
+      btn.setAttribute('aria-pressed', cintaActiva ? 'true' : 'false');
+    }
+    pintar();
+    btn.addEventListener('click', function () {
+      cintaActiva = !cintaActiva;
+      try { localStorage.setItem('panel-cinta', cintaActiva ? 'on' : 'off'); } catch (e) {}
+      pintar();
+      actualizarCinta();
     });
   })();
 
