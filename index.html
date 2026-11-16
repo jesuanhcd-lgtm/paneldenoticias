@@ -924,12 +924,6 @@
   /* ===== BOLETINES: buscador sobre el resumen ===== */
   .filtros-chips { display: contents; }
   .buscador.en-boletin .filtro-toggle:not(.cinta) { display: none; }
-  .filtro-toggle.cinta.activo {
-    border-color: var(--accent-primary);
-    color: var(--accent-primary);
-    background: var(--accent-primary-soft);
-  }
-  .filtro-toggle.cinta.activo .dot-filtro { background: var(--live-dot); }
   .buscador.en-reclamos { display: none; }
 
   /* ===== VERSIÓN APP / MÓVIL (html.modo-app) ===== */
@@ -1177,6 +1171,7 @@
           <button class="fuente-btn" id="fuente-mas" type="button" aria-label="Agrandar letra" title="Agrandar letra">A</button>
         </div>
         <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Cambiar tema" title="Cambiar tema claro/oscuro">◐</button>
+        <button class="theme-toggle activo" id="btn-cinta" type="button" aria-pressed="true" aria-label="Mostrar u ocultar la cinta de titulares" title="Cinta de titulares: activada (tocá para ocultarla)">↔</button>
         <button class="theme-toggle" id="btn-reclamos" type="button" aria-label="Reclamos y trámites" title="Reclamos y trámites">📣</button>
       </div>
     </div>
@@ -1218,11 +1213,7 @@
   </button>
   <button class="filtro-toggle seleccion" id="toggle-seleccion" type="button" aria-pressed="false">
     <span class="dot-filtro" aria-hidden="true"></span> Seleccionar
-  </button>
-  <button class="filtro-toggle cinta activo" id="btn-cinta" type="button" aria-pressed="true" title="Mostrar u ocultar la cinta de titulares">
-    <span class="dot-filtro" aria-hidden="true"></span> Cinta
-  </button>
-  </div>
+  </button>  </div>
 </div>
 
 <main id="main-content">
@@ -2856,6 +2847,7 @@
     function pintar() {
       btn.classList.toggle('activo', cintaActiva);
       btn.setAttribute('aria-pressed', cintaActiva ? 'true' : 'false');
+      btn.title = cintaActiva ? 'Cinta de titulares: activada (tocá para ocultarla)' : 'Cinta de titulares: oculta (tocá para mostrarla)';
     }
     pintar();
     btn.addEventListener('click', function () {
